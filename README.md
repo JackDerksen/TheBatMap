@@ -20,4 +20,4 @@ the Edmonton Police Service's public crime statistics data.
 
 ## Project Structure
 
-\<insert screenshot here>
+![image](https://github.com/user-attachments/assets/0924ae9c-821e-4c93-88c8-6f3b142260d6)
