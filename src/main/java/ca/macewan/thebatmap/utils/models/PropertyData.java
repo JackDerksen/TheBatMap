@@ -19,20 +19,20 @@ public class PropertyData {
         this.accountNumber = accountNumber;
     }
 
-    public void setAddress(String suite, String houseNum, String street, String garage) {
-        this.address = new Address(suite,  houseNum, street, garage);
+    public void setAddress(String houseNum, String street) {
+        this.address = new Address(houseNum, street);
     }
 
     public Address getAddress() { return this.address; }
 
-    public void setNeighbourhood(String neighbourhoodId, String neighbourhood, String ward) {
-        this.neighbourhood = new Neighbourhood(neighbourhoodId, neighbourhood, ward);
+    public void setNeighbourhood(String neighbourhood, String ward) {
+        this.neighbourhood = new Neighbourhood(neighbourhood, ward);
     }
 
     public Neighbourhood getNeighbourhood() { return this.neighbourhood; }
 
-    public void setLocation(double latitude, double longitude, String pointLocation) {
-        this.location = new Location(latitude, longitude, pointLocation);
+    public void setLocation(double latitude, double longitude) {
+        this.location = new Location(latitude, longitude);
     }
 
     public Location getLocation() { return location; }
