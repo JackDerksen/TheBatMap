@@ -1,10 +1,10 @@
 package ca.macewan.thebatmap.utils.models;
 
 public class Address {
-    private String suite;
-    private String houseNum;
-    private String street;
-    private String garage;
+    private final String suite;
+    private final String houseNum;
+    private final String street;
+    private final String garage;
 
     public Address(String suite, String houseNum, String street, String garage) {
         this.suite = suite;

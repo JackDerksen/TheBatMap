@@ -1,13 +1,13 @@
 package ca.macewan.thebatmap.utils.models;
 
 public class Assessment {
-    private double assessedValue;
-    private int assessmentClass1Percent;
-    private int assessmentClass2Percent;
-    private int assessmentClass3Percent;
-    private String assessmentClass1;
-    private String assessmentClass2;
-    private String assessmentClass3;
+    private final double assessedValue;
+    private final int assessmentClass1Percent;
+    private final int assessmentClass2Percent;
+    private final int assessmentClass3Percent;
+    private final String assessmentClass1;
+    private final String assessmentClass2;
+    private final String assessmentClass3;
 
     public Assessment(double assessedValue, int assessmentClass1Percent, int assessmentClass2Percent, int assessmentClass3Percent,
                       String assessmentClass1, String assessmentClass2, String assessmentClass3) {

@@ -1,9 +1,9 @@
 package ca.macewan.thebatmap.utils.models;
 
 public class Location {
-    private double latitude;
-    private double longitude;
-    private String pointLocation;
+    private final double latitude;
+    private final double longitude;
+    private final String pointLocation;
 
     public Location(double latitude, double longitude, String pointLocation) {
         this.latitude = latitude;
