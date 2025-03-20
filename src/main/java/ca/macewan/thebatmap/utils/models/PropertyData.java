@@ -5,10 +5,7 @@ package ca.macewan.thebatmap.utils.models;
  */
 public class PropertyData {
     private String accountNumber;
-    private String suite;
-    private String houseNumber;
-    private String streetName;
-    private String garage;
+    private Address address;
     private String neighbourhoodId;
     private String neighbourhood;
     private String ward;
@@ -32,37 +29,11 @@ public class PropertyData {
         this.accountNumber = accountNumber;
     }
 
-    public String getSuite() {
-        return suite;
+    public void setAddress(String suite, String houseNum, String street, String garage) {
+        this.address = new Address(suite,  houseNum, street, garage);
     }
 
-    public void setSuite(String suite) {
-        this.suite = suite;
-    }
-
-    public String getHouseNumber() {
-        return houseNumber;
-    }
-
-    public void setHouseNumber(String houseNumber) {
-        this.houseNumber = houseNumber;
-    }
-
-    public String getStreetName() {
-        return streetName;
-    }
-
-    public void setStreetName(String streetName) {
-        this.streetName = streetName;
-    }
-
-    public String getGarage() {
-        return garage;
-    }
-
-    public void setGarage(String garage) {
-        this.garage = garage;
-    }
+    public Address getAddress() { return this.address; }
 
     public String getNeighbourhoodId() {
         return neighbourhoodId;
@@ -168,26 +139,11 @@ public class PropertyData {
         this.assessmentClass3 = assessmentClass3;
     }
 
-    // A convenient method to get the full address
-    public String getFullAddress() {
-        StringBuilder address = new StringBuilder();
-        if (suite != null && !suite.isEmpty()) {
-            address.append(suite).append(" - ");
-        }
-        if (houseNumber != null && !houseNumber.isEmpty()) {
-            address.append(houseNumber).append(" ");
-        }
-        if (streetName != null && !streetName.isEmpty()) {
-            address.append(streetName);
-        }
-        return address.toString().trim();
-    }
-
     @Override
     public String toString() {
         return "PropertyData{" +
                 "accountNumber='" + accountNumber + '\'' +
-                ", address='" + getFullAddress() + '\'' +
+                ", address='" + address + '\'' +
                 ", neighbourhood='" + neighbourhood + '\'' +
                 ", ward='" + ward + '\'' +
                 ", assessedValue=" + assessedValue +
