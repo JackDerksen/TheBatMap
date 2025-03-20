@@ -19,8 +19,8 @@ public class PropertyData {
         this.accountNumber = accountNumber;
     }
 
-    public void setAddress(String suite, String houseNum, String street, String garage) {
-        this.address = new Address(suite,  houseNum, street, garage);
+    public void setAddress(String houseNum, String street) {
+        this.address = new Address(houseNum, street);
     }
 
     public Address getAddress() { return this.address; }
