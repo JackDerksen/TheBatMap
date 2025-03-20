@@ -31,8 +31,8 @@ public class PropertyData {
 
     public Neighbourhood getNeighbourhood() { return this.neighbourhood; }
 
-    public void setLocation(double latitude, double longitude, String pointLocation) {
-        this.location = new Location(latitude, longitude, pointLocation);
+    public void setLocation(double latitude, double longitude) {
+        this.location = new Location(latitude, longitude);
     }
 
     public Location getLocation() { return location; }
