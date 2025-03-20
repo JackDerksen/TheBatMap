@@ -8,9 +8,7 @@ public class PropertyData {
     private Address address;
     private Neighbourhood neighbourhood;
     private double assessedValue;
-    private double latitude;
-    private double longitude;
-    private String pointLocation;
+    private Location location;
     private int assessmentClass1Percent;
     private int assessmentClass2Percent;
     private int assessmentClass3Percent;
@@ -47,29 +45,11 @@ public class PropertyData {
         this.assessedValue = assessedValue;
     }
 
-    public double getLatitude() {
-        return latitude;
+    public void setLocation(double latitude, double longitude, String pointLocation) {
+        this.location = new Location(latitude, longitude, pointLocation);
     }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public String getPointLocation() {
-        return pointLocation;
-    }
-
-    public void setPointLocation(String pointLocation) {
-        this.pointLocation = pointLocation;
-    }
+    public Location getLocation() { return location; }
 
     public int getAssessmentClass1Percent() {
         return assessmentClass1Percent;

@@ -43,10 +43,7 @@ public class ParseProperties {
             property.setAddress(row.get("Suite"), row.get("House Number"), row.get("Street Name"), row.get("Garage"));
             property.setNeighbourhood(row.get("Neighbourhood ID"), row.get("Neighbourhood"), row.get("Ward"));
             property.setAssessedValue(parseDouble(row.get("Assessed Value")));
-            property.setLatitude(parseDouble(row.get("Latitude")));
-            property.setLongitude(parseDouble(row.get("Longitude")));
-            property.setPointLocation(row.get("Point Location"));
-
+            property.setLocation(parseDouble(row.get("Latitude")), parseDouble(row.get("Longitude")), row.get("Point Location"));
             // Parse assessment class percentages
             property.setAssessmentClass1Percent(parseInt(row.get("Assessment Class % 1")));
             property.setAssessmentClass2Percent(parseInt(row.get("Assessment Class % 2")));
