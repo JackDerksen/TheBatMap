@@ -42,17 +42,16 @@ public class ParseProperties {
             property.setAccountNumber(row.get("Account Number"));
             property.setAddress(row.get("Suite"), row.get("House Number"), row.get("Street Name"), row.get("Garage"));
             property.setNeighbourhood(row.get("Neighbourhood ID"), row.get("Neighbourhood"), row.get("Ward"));
-            property.setAssessedValue(parseDouble(row.get("Assessed Value")));
             property.setLocation(parseDouble(row.get("Latitude")), parseDouble(row.get("Longitude")), row.get("Point Location"));
-            // Parse assessment class percentages
-            property.setAssessmentClass1Percent(parseInt(row.get("Assessment Class % 1")));
-            property.setAssessmentClass2Percent(parseInt(row.get("Assessment Class % 2")));
-            property.setAssessmentClass3Percent(parseInt(row.get("Assessment Class % 3")));
-
-            // Set assessment classes
-            property.setAssessmentClass1(row.get("Assessment Class 1"));
-            property.setAssessmentClass2(row.get("Assessment Class 2"));
-            property.setAssessmentClass3(row.get("Assessment Class 3"));
+            property.setAssessment(
+                    parseDouble(row.get("Assessed Value")),
+                    parseInt(row.get("Assessment Class % 1")),
+                    parseInt(row.get("Assessment Class % 2")),
+                    parseInt(row.get("Assessment Class % 3")),
+                    row.get("Assessment Class 1"),
+                    row.get("Assessment Class 2"),
+                    row.get("Assessment Class 3")
+            );
 
             propertyDataList.add(property);
         }
