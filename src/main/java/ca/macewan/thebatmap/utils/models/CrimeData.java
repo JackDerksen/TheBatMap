@@ -13,8 +13,7 @@ public class CrimeData {
     private String intersection;
     private int objectId;
     private LocalDate dateReported;
-    private double x;
-    private double y;
+    private CrimeLocation location;
 
     // Getters and setters
     public String getOccurrenceCategory() {
@@ -65,21 +64,9 @@ public class CrimeData {
         this.dateReported = dateReported;
     }
 
-    public double getX() {
-        return x;
-    }
+    public void setLocation(double x, double y) { this.location = new CrimeLocation(x, y); }
 
-    public void setX(double x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
-    }
+    public CrimeLocation getLocation() { return this.location; }
 
     @Override
     public String toString() {

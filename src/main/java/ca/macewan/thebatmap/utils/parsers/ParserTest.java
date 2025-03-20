@@ -55,7 +55,7 @@ public class ParserTest {
                 System.out.println("Group: " + crime.getOccurrenceGroup());
                 System.out.println("Location: " + crime.getIntersection());
                 System.out.println("Date: " + crime.getDateReported());
-                System.out.println("Coordinates: " + crime.getX() + ", " + crime.getY());
+                System.out.println("Coordinates: " + crime.getLocation());
             }
         } catch (IOException e) {
             System.err.println("Error testing crime parser: " + e.getMessage());
