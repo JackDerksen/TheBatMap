@@ -25,8 +25,8 @@ public class PropertyData {
 
     public Address getAddress() { return this.address; }
 
-    public void setNeighbourhood(String neighbourhoodId, String neighbourhood, String ward) {
-        this.neighbourhood = new Neighbourhood(neighbourhoodId, neighbourhood, ward);
+    public void setNeighbourhood(String neighbourhood, String ward) {
+        this.neighbourhood = new Neighbourhood(neighbourhood, ward);
     }
 
     public Neighbourhood getNeighbourhood() { return this.neighbourhood; }
