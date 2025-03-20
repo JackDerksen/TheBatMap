@@ -51,8 +51,7 @@ public class ParseCrime {
             crime.setIntersection(row.get("Intersection"));
             crime.setObjectId(parseInt(row.get("OBJECTID")));
             crime.setDateReported(parseDate(row.get("Date Reported")));
-            crime.setX(parseDouble(row.get("x")));
-            crime.setY(parseDouble(row.get("y")));
+            crime.setLocation(parseDouble(row.get("x")), parseDouble(row.get("y")));
 
             crimeDataList.add(crime);
         }
