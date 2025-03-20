@@ -6,9 +6,7 @@ package ca.macewan.thebatmap.utils.models;
 public class PropertyData {
     private String accountNumber;
     private Address address;
-    private String neighbourhoodId;
-    private String neighbourhood;
-    private String ward;
+    private Neighbourhood neighbourhood;
     private double assessedValue;
     private double latitude;
     private double longitude;
@@ -35,29 +33,11 @@ public class PropertyData {
 
     public Address getAddress() { return this.address; }
 
-    public String getNeighbourhoodId() {
-        return neighbourhoodId;
+    public void setNeighbourhood(String neighbourhoodId, String neighbourhood, String ward) {
+        this.neighbourhood = new Neighbourhood(neighbourhoodId, neighbourhood, ward);
     }
 
-    public void setNeighbourhoodId(String neighbourhoodId) {
-        this.neighbourhoodId = neighbourhoodId;
-    }
-
-    public String getNeighbourhood() {
-        return neighbourhood;
-    }
-
-    public void setNeighbourhood(String neighbourhood) {
-        this.neighbourhood = neighbourhood;
-    }
-
-    public String getWard() {
-        return ward;
-    }
-
-    public void setWard(String ward) {
-        this.ward = ward;
-    }
+    public Neighbourhood getNeighbourhood() { return this.neighbourhood; }
 
     public double getAssessedValue() {
         return assessedValue;
@@ -145,7 +125,6 @@ public class PropertyData {
                 "accountNumber='" + accountNumber + '\'' +
                 ", address='" + address + '\'' +
                 ", neighbourhood='" + neighbourhood + '\'' +
-                ", ward='" + ward + '\'' +
                 ", assessedValue=" + assessedValue +
                 '}';
     }
