@@ -40,9 +40,9 @@ public class ParseProperties {
 
             // Map CSV fields to PropertyData object based on the actual CSV structure
             property.setAccountNumber(row.get("Account Number"));
-            property.setAddress(row.get("Suite"), row.get("House Number"), row.get("Street Name"), row.get("Garage"));
-            property.setNeighbourhood(row.get("Neighbourhood ID"), row.get("Neighbourhood"), row.get("Ward"));
-            property.setLocation(parseDouble(row.get("Latitude")), parseDouble(row.get("Longitude")), row.get("Point Location"));
+            property.setAddress(row.get("House Number"), row.get("Street Name"));
+            property.setNeighbourhood(row.get("Neighbourhood"), row.get("Ward"));
+            property.setLocation(parseDouble(row.get("Latitude")), parseDouble(row.get("Longitude")));
             property.setAssessment(
                     parseDouble(row.get("Assessed Value")),
                     parseInt(row.get("Assessment Class % 1")),
