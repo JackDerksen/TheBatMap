@@ -21,7 +21,7 @@ public class ParseProperties {
      * @throws IOException If an I/O error occurs
      */
     public static List<PropertyData> parsePropertyData() throws IOException {
-        return parsePropertyData(FileUtils.getResourceAsPath(FileUtils.PROPERTY_DATA_RESOURCE));
+        return parsePropertyData(FileUtils.getResourceAsPath(FileUtils.PROPERTY_DATA_PATH));
     }
 
     /**

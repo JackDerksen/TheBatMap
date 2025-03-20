@@ -2,12 +2,8 @@ package ca.macewan.thebatmap.utils.general;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 
@@ -19,8 +15,8 @@ public class FileUtils {
     private static final String SAMPLE_DATA_DIR = "/ca/macewan/thebatmap/sample-data/";
 
     // File paths as resource names
-    public static final String PROPERTY_DATA_RESOURCE = SAMPLE_DATA_DIR + "property_data.csv";
-    public static final String CRIME_DATA_RESOURCE = SAMPLE_DATA_DIR + "crime_stats.csv";
+    public static final String PROPERTY_DATA_PATH = SAMPLE_DATA_DIR + "property_data.csv";
+    public static final String CRIME_DATA_PATH = SAMPLE_DATA_DIR + "crime_stats.csv";
 
     /**
      * Gets an input stream for a resource

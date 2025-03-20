@@ -27,7 +27,7 @@ public class ParseCrime {
      * @throws IOException If an I/O error occurs
      */
     public static List<CrimeData> parseCrimeData() throws IOException {
-        return parseCrimeData(FileUtils.getResourceAsPath(FileUtils.CRIME_DATA_RESOURCE));
+        return parseCrimeData(FileUtils.getResourceAsPath(FileUtils.CRIME_DATA_PATH));
     }
 
     /**

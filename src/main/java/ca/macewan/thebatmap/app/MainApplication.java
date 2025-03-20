@@ -9,13 +9,14 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class MainApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
         // Load the map image
-        Image mapImage = new Image(getClass().getResourceAsStream("/ca/macewan/thebatmap/assets/edmonton.png"));
+        Image mapImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/ca/macewan/thebatmap/assets/edmonton.png")));
         ImageView mapView = new ImageView(mapImage);
 
         // Get image dimensions
