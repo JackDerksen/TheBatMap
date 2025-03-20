@@ -27,11 +27,10 @@ public class ParserTest {
                 PropertyData property = properties.get(i);
                 System.out.println("\nProperty #" + (i + 1));
                 System.out.println("Account: " + property.getAccountNumber());
-                System.out.println("Address: " + property.getFullAddress());
+                System.out.println("Address: " + property.getAddress());
                 System.out.println("Neighbourhood: " + property.getNeighbourhood());
-                System.out.println("Ward: " + property.getWard());
-                System.out.println("Value: $" + property.getAssessedValue());
-                System.out.println("Location: " + property.getLatitude() + ", " + property.getLongitude());
+                System.out.println("Value: $" + property.getAssessment());
+                System.out.println("Location: " + property.getLocation());
             }
         } catch (IOException e) {
             System.err.println("Error testing property parser: " + e.getMessage());
