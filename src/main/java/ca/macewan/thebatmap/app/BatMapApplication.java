@@ -1,5 +1,6 @@
 package ca.macewan.thebatmap.app;
 
+import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -99,14 +100,14 @@ public class BatMapApplication {
         // Load the FXML
         loadFXML(mapContainer);
 
-        // Create the toggle button
-        StackPane toggleButton = createToggleButton();
-        AnchorPane leftSideLayout = positionToggleButton(toggleButton);
-
-        // Create a StackPane to hold everything together
+        // Create a StackPane to hold the map content
         StackPane mainContentStack = new StackPane();
-        mainContentStack.getChildren().addAll(mapContainer, leftSideLayout);
+        mainContentStack.getChildren().add(mapContainer);
         contentLayout.setCenter(mainContentStack);
+
+        // Create the left side panel with controls
+        VBox leftSideControls = CreateLeftPanel();
+        contentLayout.setLeft(leftSideControls);
 
         return contentLayout;
     }
@@ -125,47 +126,62 @@ public class BatMapApplication {
     }
 
     /**
-     * Creates a toggle button with a triangle shape
-     * @return A configured StackPane containing the toggle button
+     * Creates the left side control panel with a VBox containing
+     * a combo box and filter controls
+     * @return A configured VBox for the left side panel
      */
-    private StackPane createToggleButton() {
-        // Create right-pointing triangle arrow shape (since it's on the left)
-        Polygon arrow = new Polygon();
-        arrow.getPoints().addAll(
-                0.0, 0.0,    // Top left
-                0.0, 20.0,   // Bottom left
-                10.0, 10.0   // Right middle
-        );
-        arrow.setFill(Color.YELLOW);
+    private VBox CreateLeftPanel() {
+        // Create a VBox with spacing between elements
+        VBox leftControls = new VBox(10);
+        leftControls.setPrefWidth(200);
+        leftControls.setPadding(new Insets(10));
+        leftControls.setStyle("-fx-background-color: #333333;");
 
-        // Create button container
-        StackPane toggleButton = new StackPane(arrow);
-        toggleButton.setPrefWidth(30);
-        toggleButton.setPrefHeight(60);
-        toggleButton.setStyle("-fx-background-color: #333333; -fx-cursor: hand;");
-        toggleButton.setPadding(new Insets(5));
+        // Create a title for the panel
+        Label panelTitle = new Label("Control Panel");
+        panelTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-        // Add click handler
-        toggleButton.setOnMouseClicked(e -> {
-            // Add code here for button functionality
-            System.out.println("Toggle button clicked!");
+        // Create a label for the filter
+        Label filterLabel = new Label("Filter Crime Types");
+        filterLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        // Create a combo box for crime types
+        String[] crimeTypes = {"All", "Theft", "Assault", "Break & Enter", "Drugs"};
+        ComboBox<String> crimeTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(crimeTypes));
+        crimeTypeComboBox.setPrefWidth(180);
+        crimeTypeComboBox.getSelectionModel().selectFirst(); // Select "All" by default
+
+        // Create buttons for additional actions
+        Button applyFilterButton = new Button("Apply Filter");
+        Button resetButton = new Button("Reset");
+
+        // Create an HBox to hold the buttons side by side
+        HBox buttonContainer = new HBox(10);
+        buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
+
+        // Add event handlers
+        applyFilterButton.setOnAction(e -> {
+            String selectedType = crimeTypeComboBox.getValue();
+            System.out.println("Filtering by crime type: " + selectedType);
+            // Add your filtering logic here
         });
 
-        return toggleButton;
-    }
+        resetButton.setOnAction(e -> {
+            crimeTypeComboBox.getSelectionModel().selectFirst();
+            System.out.println("Filters reset");
+            // Add your reset logic here
+        });
 
-    /**
-     * Positions the toggle button on the left side of the screen
-     * @param toggleButton The button to position
-     * @return An AnchorPane containing the positioned button
-     */
-    private AnchorPane positionToggleButton(StackPane toggleButton) {
-        AnchorPane leftSideLayout = new AnchorPane();
-        leftSideLayout.getChildren().add(toggleButton);
-        AnchorPane.setTopAnchor(toggleButton, 300.0); // Position vertically in the middle
-        AnchorPane.setLeftAnchor(toggleButton, 0.0);  // Stick to the left edge
+        // Add all components to the VBox
+        leftControls.getChildren().addAll(
+                panelTitle,
+                new Separator(), // Add a separator for visual distinction
+                filterLabel,
+                crimeTypeComboBox,
+                buttonContainer
+        );
 
-        return leftSideLayout;
+        return leftControls;
     }
 
     /**
