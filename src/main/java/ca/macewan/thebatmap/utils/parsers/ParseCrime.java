@@ -44,10 +44,10 @@ public class ParseCrime {
         for (Map<String, String> row : csvData) {
             CrimeData crime = new CrimeData();
 
-            List<Map.Entry<String,String>> testList = row.entrySet().stream().toList();
+            List<Map.Entry<String,String>> rowList = row.entrySet().stream().toList();
 
             // Map CSV fields to CrimeData object
-            crime.setOccurrenceCategory(testList.getFirst().getValue());
+            crime.setOccurrenceCategory(rowList.getFirst().getValue());
             crime.setOccurrenceGroup(row.get("Occurrence_Group"));
             crime.setOccurrenceTypeGroup(row.get("Occurrence_Type_Group"));
             crime.setIntersection(row.get("Intersection"));
