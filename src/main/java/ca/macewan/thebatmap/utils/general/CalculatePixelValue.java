@@ -21,6 +21,22 @@ public class CalculatePixelValue {
     private Map<String, CrimePixelData> crimePixels = new HashMap<>();
     private Map<String, PropertyPixelData> propertyPixels = new HashMap<>();
 
+    public CalculatePixelValue() {
+        try {
+            loadData();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, CrimePixelData> getCrimePixels() {
+        return crimePixels;
+    }
+
+    public Map<String, PropertyPixelData> getPropertyPixels() {
+        return propertyPixels;
+    }
+
     /**
      * Inner class to store crime data for a specific pixel
      */

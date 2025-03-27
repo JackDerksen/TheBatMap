@@ -4,6 +4,7 @@ module ca.macewan.thebatmap {
 
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
+    requires java.desktop;
 
     opens ca.macewan.thebatmap to javafx.fxml;
     exports ca.macewan.thebatmap.app;
