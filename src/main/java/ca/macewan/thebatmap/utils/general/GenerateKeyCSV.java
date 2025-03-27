@@ -17,7 +17,7 @@ import java.util.List;
  * Utility class for generating CSV files with key data for heatmap visualization
  */
 public class GenerateKeyCSV {
-    private static final String OUTPUT_DIR = "data/";
+    private static final String OUTPUT_DIR = "src/main/resources/ca/macewan/thebatmap/key-data/";
     public static final String KEY_PROPERTY_DATA_PATH = OUTPUT_DIR + "keyPropertyData.csv";
     public static final String KEY_CRIME_DATA_PATH = OUTPUT_DIR + "keyCrimeData.csv";
 
@@ -37,12 +37,16 @@ public class GenerateKeyCSV {
         Path outputPath = Paths.get(KEY_PROPERTY_DATA_PATH);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()))) {
             // Write header
-            writer.write("id,value,latitude,longitude,x,y,neighborhood,ward");
+            writer.write("id,value,latitude,longitude,x,y,neighborhood,ward,address");
             writer.newLine();
 
             // Write data rows
             int id = 1;
             for (PropertyData property : properties) {
+                if (property.getLocation() == null) {
+                    continue; // Skip properties without location data
+                }
+
                 double lat = property.getLocation().getLatitude();
                 double lon = property.getLocation().getLongitude();
 
@@ -53,7 +57,10 @@ public class GenerateKeyCSV {
 
                 int[] pixelCoords = CoordinateToPixel.geoToPixel(lat, lon);
 
-                writer.write(String.format("%d,%.2f,%.6f,%.6f,%d,%d,%s,%s",
+                // Get the full address as a string
+                String address = property.getAddress() != null ? property.getAddress().toString() : "";
+
+                writer.write(String.format("%d,%.2f,%.6f,%.6f,%d,%d,%s,%s,%s",
                         id++,
                         property.getAssessment().getAssessedValue(),
                         lat,
@@ -61,7 +68,8 @@ public class GenerateKeyCSV {
                         pixelCoords[0],
                         pixelCoords[1],
                         escapeCSV(property.getNeighbourhood().getNeighbourhood()),
-                        escapeCSV(property.getNeighbourhood().getWard())
+                        escapeCSV(property.getNeighbourhood().getWard()),
+                        escapeCSV(address)
                 ));
                 writer.newLine();
             }
@@ -73,10 +81,10 @@ public class GenerateKeyCSV {
 
     /**
      * Generates a CSV file with key crime data (type and location)
-     * @return Path to the generated CSV file
+     *
      * @throws IOException If an I/O error occurs
      */
-    public static Path generateKeyCrimeData() throws IOException {
+    public static void generateKeyCrimeData() throws IOException {
         // Ensure output directory exists
         Files.createDirectories(Paths.get(OUTPUT_DIR));
 
@@ -87,13 +95,15 @@ public class GenerateKeyCSV {
         Path outputPath = Paths.get(KEY_CRIME_DATA_PATH);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()))) {
             // Write header
-            writer.write("id,category,group,type,latitude,longitude,x,y");
+            writer.write("id,category,group,type,latitude,longitude,x,y,intersection");
             writer.newLine();
 
             // Write data rows
             int id = 1;
+            int skippedCount = 0;
             for (CrimeData crime : crimes) {
                 if (crime.getLocation() == null) {
+                    skippedCount++;
                     continue;
                 }
 
@@ -102,27 +112,36 @@ public class GenerateKeyCSV {
 
                 // Skip crimes outside map bounds
                 if (!CoordinateToPixel.isInBounds(lat, lon)) {
+                    skippedCount++;
                     continue;
                 }
 
                 int[] pixelCoords = CoordinateToPixel.geoToPixel(lat, lon);
 
-                writer.write(String.format("%d,%s,%s,%s,%.6f,%.6f,%d,%d",
+                // Make sure category isn't null (default to empty string if it is)
+                String category = crime.getOccurrenceCategory() != null ? crime.getOccurrenceCategory() : "";
+                String group = crime.getOccurrenceGroup() != null ? crime.getOccurrenceGroup() : "";
+                String type = crime.getOccurrenceTypeGroup() != null ? crime.getOccurrenceTypeGroup() : "";
+                String intersection = crime.getIntersection() != null ? crime.getIntersection() : "";
+
+                writer.write(String.format("%d,%s,%s,%s,%.6f,%.6f,%d,%d,%s",
                         id++,
-                        escapeCSV(crime.getOccurrenceCategory()),
-                        escapeCSV(crime.getOccurrenceGroup()),
-                        escapeCSV(crime.getOccurrenceTypeGroup()),
+                        escapeCSV(category),
+                        escapeCSV(group),
+                        escapeCSV(type),
                         lat,
                         lon,
                         pixelCoords[0],
-                        pixelCoords[1]
+                        pixelCoords[1],
+                        escapeCSV(intersection)
                 ));
                 writer.newLine();
             }
+
+            System.out.println("Skipped " + skippedCount + " crime records (missing or out-of-bounds location)");
         }
 
         System.out.println("Generated crime data CSV at: " + outputPath.toAbsolutePath());
-        return outputPath;
     }
 
     /**
@@ -140,6 +159,16 @@ public class GenerateKeyCSV {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
         return value;
+    }
+
+    /**
+     * Checks if the CSV files exist
+     * @return true if both files exist, false otherwise
+     */
+    public static boolean keyFilesExist() {
+        Path propertyPath = Paths.get(KEY_PROPERTY_DATA_PATH);
+        Path crimePath = Paths.get(KEY_CRIME_DATA_PATH);
+        return Files.exists(propertyPath) && Files.exists(crimePath);
     }
 
     /**
