@@ -11,10 +11,11 @@ public class DrawOverlay {
     private static final CalculatePixelValue pixels = new CalculatePixelValue();
     private static final Set<String> crimePixels = pixels.getCrimePixels().keySet();
     private static final Set<String> propertyPixels = pixels.getPropertyPixels().keySet();
+    private static final int width = CoordinateToPixel.getMapWidth() + 1;
+    private static final int height = CoordinateToPixel.getMapHeight() + 1;
 
     // Create the new image needed
-    private static final BufferedImage img = new BufferedImage(
-            CoordinateToPixel.getMapWidth()+1, CoordinateToPixel.getMapHeight()+1, BufferedImage.TYPE_INT_RGB);
+    private static final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
     public static void main(String[] args) {
         drawImage(0);
@@ -33,16 +34,26 @@ public class DrawOverlay {
             type = "property";
         }
 
+        Graphics2D g2d = img.createGraphics();
+
+        g2d.setComposite(AlphaComposite.Clear);
+        g2d.fillRect(0, 0, width, height);
+
+        g2d.setComposite(AlphaComposite.Src);
+        g2d.setColor(Color.RED);
+
         for (String current : data) {
             String[] coordinate = current.split(",");
             int x = Integer.parseInt(coordinate[0]);
             int y = Integer.parseInt(coordinate[1]);
-            img.setRGB(x, y, Color.WHITE.getRGB());
+            g2d.fillRect(x, y, 1, 1);
         }
 
-        File outputfile = new File(GenerateKeyCSV.getOutputDir() + type + "Pixels.jpg");
+        g2d.dispose();
 
-        try { ImageIO.write(img, "jpg", outputfile); }
+        File outputfile = new File(GenerateKeyCSV.getOutputDir() + type + "Pixels.png");
+
+        try { ImageIO.write(img, "png", outputfile); }
         catch (IOException _) { }
     }
 }
