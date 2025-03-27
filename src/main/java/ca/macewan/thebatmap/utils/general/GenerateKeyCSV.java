@@ -21,6 +21,8 @@ public class GenerateKeyCSV {
     public static final String KEY_PROPERTY_DATA_PATH = OUTPUT_DIR + "keyPropertyData.csv";
     public static final String KEY_CRIME_DATA_PATH = OUTPUT_DIR + "keyCrimeData.csv";
 
+    public static String getOutputDir() { return OUTPUT_DIR; }
+
     /**
      * Generates a CSV file with key property data (value and location)
      * @return Path to the generated CSV file

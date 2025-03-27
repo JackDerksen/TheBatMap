@@ -15,6 +15,14 @@ public class CoordinateToPixel {
     private static final double BOTTOM_RIGHT_LAT = 53.420792;
     private static final double BOTTOM_RIGHT_LON = -113.317686;
 
+    public static int getMapWidth() {
+        return MAP_WIDTH;
+    }
+
+    public static int getMapHeight() {
+        return MAP_HEIGHT;
+    }
+
     /**
      * Converts latitude and longitude to pixel X coordinate on the map image
      * @param longitude The longitude value to convert
