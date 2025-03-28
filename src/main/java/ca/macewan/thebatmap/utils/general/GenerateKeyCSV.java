@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class GenerateKeyCSV {
     private static final String OUTPUT_DIR = "src/main/resources/ca/macewan/thebatmap/key-data/";
-    public static final String KEY_PROPERTY_DATA_PATH = OUTPUT_DIR + "keyPropertyData.csv";
-    public static final String KEY_CRIME_DATA_PATH = OUTPUT_DIR + "keyCrimeData.csv";
+    public static final String KEY_PROPERTY_DATA_PATH = OUTPUT_DIR + "key_property_data.csv";
+    public static final String KEY_CRIME_DATA_PATH = OUTPUT_DIR + "key_crime_data.csv";
 
     public static String getOutputDir() { return OUTPUT_DIR; }
 
@@ -82,7 +82,8 @@ public class GenerateKeyCSV {
     }
 
     /**
-     * Generates a CSV file with key crime data (type and location)
+     * Generates a CSV file with simplified crime data categories
+     * tailored for homebuyer-focused heatmap visualization
      *
      * @throws IOException If an I/O error occurs
      */
@@ -96,13 +97,19 @@ public class GenerateKeyCSV {
         // Write to CSV
         Path outputPath = Paths.get(KEY_CRIME_DATA_PATH);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath.toFile()))) {
-            // Write header
-            writer.write("id,category,group,type,latitude,longitude,x,y,intersection");
+            // Write header with simplified categories
+            writer.write("id,simplified_category,original_category,type,latitude,longitude,x,y,intersection");
             writer.newLine();
+
+            // Stats counters
+            int violentCount = 0;
+            int propertyCount = 0;
+            int disorderCount = 0;
+            int miscCount = 0;
+            int skippedCount = 0;
 
             // Write data rows
             int id = 1;
-            int skippedCount = 0;
             for (CrimeData crime : crimes) {
                 if (crime.getLocation() == null) {
                     skippedCount++;
@@ -120,16 +127,35 @@ public class GenerateKeyCSV {
 
                 int[] pixelCoords = CoordinateToPixel.geoToPixel(lat, lon);
 
-                // Make sure category isn't null (default to empty string if it is)
-                String category = crime.getOccurrenceCategory() != null ? crime.getOccurrenceCategory() : "";
+                // Get original values (with null checks)
+                String originalCategory = crime.getOccurrenceCategory() != null ? crime.getOccurrenceCategory() : "";
                 String group = crime.getOccurrenceGroup() != null ? crime.getOccurrenceGroup() : "";
                 String type = crime.getOccurrenceTypeGroup() != null ? crime.getOccurrenceTypeGroup() : "";
                 String intersection = crime.getIntersection() != null ? crime.getIntersection() : "";
 
+                // Classify into simplified categories
+                String simplifiedCategory = classifyCrime(originalCategory, group, type);
+
+                // Update counters
+                switch (simplifiedCategory) {
+                    case "Violent Crime":
+                        violentCount++;
+                        break;
+                    case "Property Crime":
+                        propertyCount++;
+                        break;
+                    case "Public Disorder":
+                        disorderCount++;
+                        break;
+                    case "Misc":
+                        miscCount++;
+                        break;
+                }
+
                 writer.write(String.format("%d,%s,%s,%s,%.6f,%.6f,%d,%d,%s",
                         id++,
-                        escapeCSV(category),
-                        escapeCSV(group),
+                        escapeCSV(simplifiedCategory),
+                        escapeCSV(originalCategory),
                         escapeCSV(type),
                         lat,
                         lon,
@@ -140,10 +166,86 @@ public class GenerateKeyCSV {
                 writer.newLine();
             }
 
-            System.out.println("Skipped " + skippedCount + " crime records (missing or out-of-bounds location)");
+            System.out.println("Crime classification stats:");
+            System.out.println("- Violent Crimes: " + violentCount);
+            System.out.println("- Property Crimes: " + propertyCount);
+            System.out.println("- Public Disorder: " + disorderCount);
+            System.out.println("- Misc: " + miscCount);
+            System.out.println("- Skipped: " + skippedCount + " (missing or out-of-bounds location)");
         }
 
-        System.out.println("Generated crime data CSV at: " + outputPath.toAbsolutePath());
+        System.out.println("Generated simplified crime data CSV at: " + outputPath.toAbsolutePath());
+    }
+
+    /**
+     * Classifies crimes into simplified categories for homebuyer-focused visualization
+     *
+     * @param category Original occurrence category
+     * @param group Original occurrence group
+     * @param type Original occurrence type
+     * @return Simplified category (Violent Crime, Property Crime, Public Disorder, or Misc)
+     */
+    private static String classifyCrime(String category, String group, String type) {
+        // Default to "Misc" if any values are null
+        if (category == null || group == null || type == null) {
+            return "Misc";
+        }
+
+        // 1. Violent Crimes
+        if (category.equals("Violent")) {
+            return "Violent Crime";
+        }
+
+        if (category.equals("Weapons")) {
+            return "Violent Crime";
+        }
+
+        if (group.equals("Personal Violence")) {
+            return "Violent Crime";
+        }
+
+        // Specific robbery cases (even if categorized as Property in original data)
+        if (type.contains("Robbery")) {
+            return "Violent Crime";
+        }
+
+        // 2. Property Crimes
+        if (group.equals("Property")) {
+            // Check for specific property crime types
+            if (type.contains("Break and Enter") ||
+                    type.contains("Theft") ||
+                    type.contains("Arson") ||
+                    type.contains("Property Damage")) {
+                return "Property Crime";
+            }
+        }
+
+        // Vehicle-related property crimes
+        if (type.contains("Motor Vehicle")) {
+            return "Property Crime";
+        }
+
+        // 3. Public Disorder
+        if (category.equals("Disorder")) {
+            // Exclude certain disorder types
+            if (!type.contains("Fraud")) {
+                return "Public Disorder";
+            }
+        }
+
+        if (group.equals("General Disorder")) {
+            return "Public Disorder";
+        }
+
+        if (type.equals("Trespassing") ||
+                type.equals("Suspicious Person") ||
+                type.equals("Disturbance") || type.equals("Drugs") ||
+                type.equals("Intoxicated Person")) {
+            return "Public Disorder";
+        }
+
+        // 4. Default to "Misc" for everything else
+        return "Misc";
     }
 
     /**
