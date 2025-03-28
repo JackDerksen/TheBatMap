@@ -21,14 +21,6 @@ public class CalculatePixelValue {
     private Map<String, CrimePixelData> crimePixels = new HashMap<>();
     private Map<String, PropertyPixelData> propertyPixels = new HashMap<>();
 
-    public CalculatePixelValue() {
-        try {
-            loadData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public Map<String, CrimePixelData> getCrimePixels() {
         return crimePixels;
     }
@@ -356,9 +348,9 @@ public class CalculatePixelValue {
      * @param count Crime count
      * @return Normalized intensity (0-1)
      */
-    private double normalizeCount(int count) {
+    public static double normalizeCount(double count) {
         // Will need to adjust this value based on the data
-        final int MAX_EXPECTED_COUNT = 10;
+        final int MAX_EXPECTED_COUNT = 50;
 
         return Math.min(1.0, count / (double) MAX_EXPECTED_COUNT);
     }
@@ -368,10 +360,10 @@ public class CalculatePixelValue {
      * @param value Property value
      * @return Normalized intensity (0-1)
      */
-    private double normalizeValue(double value) {
+    public static double normalizeValue(double value) {
         // Will need to adjust these thresholds based on the data
         final double MIN_EXPECTED_VALUE = 100000.0;
-        final double MAX_EXPECTED_VALUE = 1000000.0;
+        final double MAX_EXPECTED_VALUE = 1500000.0;
 
         if (value < MIN_EXPECTED_VALUE) {
             return 0.0;
