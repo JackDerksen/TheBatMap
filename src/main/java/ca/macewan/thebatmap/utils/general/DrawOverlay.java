@@ -55,7 +55,7 @@ public class DrawOverlay {
 
         g2d.dispose();
 
-        File outputfile = new File(GenerateKeyCSV.getOutputDir() + type + "Pixels.png");
+        File outputfile = new File("src/main/resources/ca/macewan/thebatmap/assets/" + type + "Pixels.png");
 
         try { ImageIO.write(img, "png", outputfile); }
         catch (IOException _) { }
