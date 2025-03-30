@@ -90,19 +90,19 @@ public class CalculatePixelValue {
 
             // Count by ward
             String ward = property.getNeighbourhood().getWard();
-            if (ward != null) {
+            if (ward != null && !ward.isEmpty()) {
                 wardCount.put(ward, wardCount.getOrDefault(ward, 0) + 1);
             }
 
             // Count by neighborhood
             String neighborhood = property.getNeighbourhood().getNeighbourhood();
-            if (neighborhood != null) {
+            if (neighborhood != null && !neighborhood.isEmpty()) {
                 neighborhoodCount.put(neighborhood, neighborhoodCount.getOrDefault(neighborhood, 0) + 1);
             }
 
             // Count by assessment class
             String assessmentClass = property.getAssessment().getAssessment1().split(" ")[0];
-            if (assessmentClass != null) {
+            if (assessmentClass != null && !assessmentClass.isEmpty()) {
                 assessmentClassCount.put(assessmentClass, assessmentClassCount.getOrDefault(assessmentClass, 0) + 1);
             }
         }
@@ -498,5 +498,13 @@ public class CalculatePixelValue {
             classes.addAll(data.getAssessmentClassCount().keySet());
         }
         return classes;
+    }
+
+    public Set<String> getWards() {
+        Set<String> wards = new HashSet<>();
+        for (PropertyPixelData data : propertyPixels.values()) {
+            wards.addAll(data.getWardCount().keySet());
+        }
+        return wards;
     }
 }
