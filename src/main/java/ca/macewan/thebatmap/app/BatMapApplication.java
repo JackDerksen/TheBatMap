@@ -160,7 +160,7 @@ public class BatMapApplication {
         filterComboBox.setPrefWidth(180);
         filterComboBox.getSelectionModel().selectFirst();
 
-        String[] assessmentClass = overlay.getAssessmentClass();
+        String[] assessmentClass = overlay.getAssessmentClass(mapTypeComboBox.getValue());
         ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
         assessmentComboBox.setPrefWidth(180);
         assessmentComboBox.getSelectionModel().selectFirst();
@@ -194,6 +194,9 @@ public class BatMapApplication {
                                                                                 newValue) -> {
             categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(newValue)));
             categoryOrGroupComboBox.getSelectionModel().selectFirst();
+
+            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(newValue)));
+            assessmentComboBox.getSelectionModel().selectFirst();
         });
 
         categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _,
@@ -206,10 +209,16 @@ public class BatMapApplication {
             String selectedType = crimeTypeComboBox.getValue();
             System.out.println("Filtering by crime type: " + selectedType);
             // Add your filtering logic here
-            overlay.setMapType(mapTypeComboBox.getValue());
+            String mapType = mapTypeComboBox.getValue();
+            overlay.setMapType(mapType);
             overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
             overlay.setFilter(filterComboBox.getValue());
-            overlay.setAssessment(assessmentComboBox.getValue());
+            if (mapType.equals("Crime")) {
+                overlay.setAssessment("");
+            }
+            else {
+                overlay.setAssessment(assessmentComboBox.getValue());
+            }
             overlay.drawImage();
         });
 

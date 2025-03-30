@@ -21,7 +21,7 @@ public class DrawOverlay {
     private String assessment = "";
     private String[] categoryOrGroupArray;
     private Set<String> filterArray;
-    private String[] assessmentClass = pixels.getAssessmentClasses().toArray(new String[0]);
+    private Set<String> assessmentClass;
 
     public DrawOverlay() {//static void main(String[] args) {
         try {
@@ -68,8 +68,12 @@ public class DrawOverlay {
         this.filter = filter;
     }
 
-    public String[] getAssessmentClass() {
-        return assessmentClass;
+    public String[] getAssessmentClass(String newValue) {
+        if (newValue.equals("Property")) {
+            assessmentClass = pixels.getAssessmentClasses();
+            return assessmentClass.toArray(new String[0]);
+        }
+        return new String[]{""};
     }
 
     public void setAssessment(String assessment) {
@@ -206,14 +210,14 @@ public class DrawOverlay {
         Map<String, Double> pixelValues = new HashMap<>();
         double count;
 
-        if (mapType.equals("crime")) {
+        if (mapType.equals("Crime")) {
             for (Map.Entry<String, CalculatePixelValue.CrimePixelData> entry : pixels.getCrimePixels().entrySet()) {
                 CalculatePixelValue.CrimePixelData crimeData = entry.getValue();
 
                 count = switch (categoryOrGroup) {
-                    case "category" -> crimeData.getCategoryCount(filter);
-                    case "group" -> crimeData.getGroupCount(filter);
-                    case "type" -> crimeData.getGroupTypeCount(filter);
+                    case "Category" -> crimeData.getCategoryCount(filter);
+                    case "Group" -> crimeData.getGroupCount(filter);
+                    case "Type" -> crimeData.getGroupTypeCount(filter);
                     default -> crimeData.getCount();
                 };
 
@@ -228,7 +232,7 @@ public class DrawOverlay {
                 Map<String, Integer> assessmentMap = null;
 
                 if (!categoryOrGroup.isEmpty()) {
-                    if (categoryOrGroup.equals("ward")) {
+                    if (categoryOrGroup.equals("Ward")) {
                         propertyMap = propertyValues.getWardCount();
                     }
                     else {
