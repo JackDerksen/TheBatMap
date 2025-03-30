@@ -224,6 +224,10 @@ public class BatMapApplication {
 
         resetButton.setOnAction(e -> {
             crimeTypeComboBox.getSelectionModel().selectFirst();
+            mapTypeComboBox.getSelectionModel().selectFirst();
+            categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            filterComboBox.getSelectionModel().selectFirst();
+            assessmentComboBox.getSelectionModel().selectFirst();
             System.out.println("Filters reset");
             // Add your reset logic here
         });
