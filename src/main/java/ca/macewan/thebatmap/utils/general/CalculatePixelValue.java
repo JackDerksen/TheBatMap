@@ -36,6 +36,7 @@ public class CalculatePixelValue {
         private int count = 0;
         private Map<String, Integer> categoryCount = new HashMap<>();
         private Map<String, Integer> groupCount = new HashMap<>();
+        private Map<String, Integer> groupTypeCount = new HashMap<>();
 
         public void addCrime(CrimeData crime) {
             count++;
@@ -51,6 +52,12 @@ public class CalculatePixelValue {
             if (group != null) {
                 groupCount.put(group, groupCount.getOrDefault(group, 0) + 1);
             }
+
+            // Count by group type
+            String groupType = crime.getOccurrenceTypeGroup();
+            if (groupType != null) {
+                groupTypeCount.put(groupType, groupTypeCount.getOrDefault(groupType, 0) + 1);
+            }
         }
 
         public int getCount() {
@@ -65,12 +72,20 @@ public class CalculatePixelValue {
             return groupCount.getOrDefault(group, 0);
         }
 
+        public int getGroupTypeCount(String groupType) {
+            return groupTypeCount.getOrDefault(groupType, 0);
+        }
+
         public Map<String, Integer> getCategoryCount() {
             return categoryCount;
         }
 
         public Map<String, Integer> getGroupCount() {
             return groupCount;
+        }
+
+        public Map<String, Integer> getGroupTypeCount() {
+            return groupTypeCount;
         }
     }
 
@@ -474,6 +489,18 @@ public class CalculatePixelValue {
             groups.addAll(data.getGroupCount().keySet());
         }
         return groups;
+    }
+
+    /**
+     * Gets all unique crime types
+     * @return Set of crime types
+     */
+    public Set<String> getCrimeTypes() {
+        Set<String> types = new HashSet<>();
+        for (CrimePixelData data : crimePixels.values()) {
+            types.addAll(data.getGroupTypeCount().keySet());
+        }
+        return types;
     }
 
     /**

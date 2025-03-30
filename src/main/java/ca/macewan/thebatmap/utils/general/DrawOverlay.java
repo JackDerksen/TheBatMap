@@ -14,15 +14,74 @@ public class DrawOverlay {
     private static final int width = CoordinateToPixel.getMapWidth() + 1;
     private static final int height = CoordinateToPixel.getMapHeight() + 1;
     private static final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    private final String[] mapTypeArray = new String[]{"Crime", "Property"};
+    private String mapType = "";
+    private String categoryOrGroup = "";
+    private String filter = "";
+    private String assessment = "";
+    private String[] categoryOrGroupArray;
+    private Set<String> filterArray;
+    private Set<String> assessmentClass;
 
-    public static void main(String[] args) {
+    public DrawOverlay() {//static void main(String[] args) {
         try {
             pixels.loadData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        //TODO Crime overlay generation
+    public String[] getMapTypeArray() {
+        return mapTypeArray;
+    }
+
+    public void setMapType(String mapType) {
+        this.mapType = mapType;
+    }
+
+    public String[] getCategoryOrGroup(String newValue) {
+        if (newValue.equals("Crime")) {
+            categoryOrGroupArray = new String[]{"Category", "Group", "Type"};
+        }
+        else {
+            categoryOrGroupArray = new String[]{"Ward", "Neighbourhood"};
+        }
+        return categoryOrGroupArray;
+    }
+
+    public void setCategoryOrGroup(String categoryOrGroup) {
+        this.categoryOrGroup = categoryOrGroup;
+    }
+
+    public String[] getFilters(String newValue) {
+        switch (newValue) {
+            case "Category" -> filterArray = pixels.getCrimeCategories();
+            case "Group" -> filterArray = pixels.getCrimeGroups();
+            case "Type" -> filterArray = pixels.getCrimeTypes();
+            case "Ward" -> filterArray = pixels.getWards();
+            default -> filterArray = pixels.getNeighborhoods();
+        }
+        return filterArray.toArray(new String[0]);
+    }
+
+    public void setFilter(String filter) {
+        this.filter = filter;
+    }
+
+    public String[] getAssessmentClass(String newValue) {
+        if (newValue.equals("Property")) {
+            assessmentClass = pixels.getAssessmentClasses();
+            return assessmentClass.toArray(new String[0]);
+        }
+        return new String[]{""};
+    }
+
+    public void setAssessment(String assessment) {
+        this.assessment = assessment;
+    }
+
+    public void setAll(String mapType, String categoryOrGroup, String filter, String assessment) {
+    //TODO Crime overlay generation
         /*
         String mapType = "crime";
 
@@ -61,37 +120,38 @@ public class DrawOverlay {
         drawImage(mapType, "", "", assessment);
         */
 
+        /*
         //TODO Specific overlay generation
         Scanner input = new Scanner(System.in);
 
         System.out.println("[crime, property]\nMap type?");
-        String mapType = input.nextLine();
+        mapType = input.nextLine();
 
         if (mapType.equals("crime")) {
-            System.out.println("[category, group]\nCrime specifics? (Enter to skip)");
-            String categoryOrGroup = input.nextLine();
+            System.out.println("[category, group, type]\nCrime specifics? (Enter to skip)");
+            categoryOrGroup = input.nextLine();
 
-            String filter = "";
             if (!categoryOrGroup.isEmpty()) {
                 if (categoryOrGroup.equals("category")) {
                     System.out.println(pixels.getCrimeCategories());
                 }
-                else {
+                else if (categoryOrGroup.equals("group")) {
                     System.out.println(pixels.getCrimeGroups());
+                }
+                else {
+                    System.out.println(pixels.getCrimeTypes());
                 }
                 System.out.println("Which? (case sensitive)");
                 filter = input.nextLine();
             }
-
-            drawImage(mapType, categoryOrGroup, filter, "");
         }
         else { // mapType.equals("property")
             System.out.println("[ward, neighbourhood]\nWant specific? (Enter to skip)");
-            String wardOrNeighbour = input.nextLine();
+            categoryOrGroup = input.nextLine();
 
-            String filter = "";
-            if (!wardOrNeighbour.isEmpty()) {
-                if (wardOrNeighbour.equals("ward")) {
+            filter = "";
+            if (!categoryOrGroup.isEmpty()) {
+                if (categoryOrGroup.equals("ward")) {
                     System.out.println(pixels.getWards());
                 }
                 else {
@@ -102,15 +162,15 @@ public class DrawOverlay {
             }
 
             System.out.println(pixels.getAssessmentClasses() + "\nWhich assessment class? (case sensitive) (Enter to skip)");
-            String assessment = input.nextLine();
-
-            drawImage(mapType, wardOrNeighbour, filter, assessment);
+            assessment = input.nextLine();
         }
+        drawImage();
+        */
     }
 
 
-    public static void drawImage(String mapType, String categoryOrGroup, String filter, String assessment) {
-        Map<String, Double> pixelValues = getPixelValues(mapType, categoryOrGroup, filter, assessment);
+    public void drawImage() {
+        Map<String, Double> pixelValues = getPixelValues();
 
         if (!pixelValues.isEmpty()) {
             Map<String, Color> gradientMap = gradientMap(pixelValues);
@@ -146,23 +206,20 @@ public class DrawOverlay {
         else System.out.println("Empty: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
     }
 
-    private static Map<String, Double> getPixelValues(String mapType, String categoryOrGroup, String filter, String assessment) {
+    private Map<String, Double> getPixelValues() {
         Map<String, Double> pixelValues = new HashMap<>();
         double count;
 
-        if (mapType.equals("crime")) {
+        if (mapType.equals("Crime")) {
             for (Map.Entry<String, CalculatePixelValue.CrimePixelData> entry : pixels.getCrimePixels().entrySet()) {
                 CalculatePixelValue.CrimePixelData crimeData = entry.getValue();
 
-                if (categoryOrGroup.equals("category")) {
-                    count = crimeData.getCategoryCount(filter);
-                }
-                else if (categoryOrGroup.equals("group")) {
-                    count = crimeData.getGroupCount(filter);
-                }
-                else {
-                    count = crimeData.getCount();
-                }
+                count = switch (categoryOrGroup) {
+                    case "Category" -> crimeData.getCategoryCount(filter);
+                    case "Group" -> crimeData.getGroupCount(filter);
+                    case "Type" -> crimeData.getGroupTypeCount(filter);
+                    default -> crimeData.getCount();
+                };
 
                 if (count > 0) pixelValues.put(entry.getKey(), count);
             }
@@ -175,7 +232,7 @@ public class DrawOverlay {
                 Map<String, Integer> assessmentMap = null;
 
                 if (!categoryOrGroup.isEmpty()) {
-                    if (categoryOrGroup.equals("ward")) {
+                    if (categoryOrGroup.equals("Ward")) {
                         propertyMap = propertyValues.getWardCount();
                     }
                     else {
