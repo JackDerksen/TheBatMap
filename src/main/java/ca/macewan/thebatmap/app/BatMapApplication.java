@@ -166,20 +166,20 @@ public class BatMapApplication {
         assessmentComboBox.getSelectionModel().selectFirst();
 
         // Create a combo box for crime types
-        String[] crimeTypes = {"All", "Theft Under $5000", "Theft Over $5000", "Theft of Motor Vehicle",
-                "Assault", "Break and Enter Residential", "Break and Enter Commercial",
-                "Drugs", "Robbery Personal", "Robbery Commercial", "Fraud - Financial",
-                "Fraud Personal", "Fraud General", "Internet Fraud", "Mischief - Property",
-                "Weapons Complaint", "Weapons Complaint Firearm", "Criminal Flight Event",
-                "Impaired Driving", "Homicide", "Graffiti", "Trespassing", "Possession Stolen Property",
-                "Fire Arson", "Recovered Motor Vehicle", "Trouble with Person", "Dispute",
-                "Disturbance", "Suspicious Person", "Suspicious Vehicle", "Intoxicated Person",
-                "Liquor Act", "Counterfeit Money", "Indecent Act", "Public Mischief",
-                "Property Damage", "Abandoned Vehicle", "Dangerous Condition", "Bomb Threat",
-                "Technology/Internet Crime", "Labour Dispute", "Workplace Accident", "Public Health Act"};
-        ComboBox<String> crimeTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(crimeTypes));
-        crimeTypeComboBox.setPrefWidth(180);
-        crimeTypeComboBox.getSelectionModel().selectFirst(); // Select "All" by default
+//        String[] crimeTypes = {"All", "Theft Under $5000", "Theft Over $5000", "Theft of Motor Vehicle",
+//                "Assault", "Break and Enter Residential", "Break and Enter Commercial",
+//                "Drugs", "Robbery Personal", "Robbery Commercial", "Fraud - Financial",
+//                "Fraud Personal", "Fraud General", "Internet Fraud", "Mischief - Property",
+//                "Weapons Complaint", "Weapons Complaint Firearm", "Criminal Flight Event",
+//                "Impaired Driving", "Homicide", "Graffiti", "Trespassing", "Possession Stolen Property",
+//                "Fire Arson", "Recovered Motor Vehicle", "Trouble with Person", "Dispute",
+//                "Disturbance", "Suspicious Person", "Suspicious Vehicle", "Intoxicated Person",
+//                "Liquor Act", "Counterfeit Money", "Indecent Act", "Public Mischief",
+//                "Property Damage", "Abandoned Vehicle", "Dangerous Condition", "Bomb Threat",
+//                "Technology/Internet Crime", "Labour Dispute", "Workplace Accident", "Public Health Act"};
+//        ComboBox<String> crimeTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(crimeTypes));
+//        crimeTypeComboBox.setPrefWidth(180);
+//        crimeTypeComboBox.getSelectionModel().selectFirst(); // Select "All" by default
 
         // Create buttons for additional actions
         Button applyFilterButton = new Button("Apply Filter");
@@ -206,8 +206,8 @@ public class BatMapApplication {
         });
 
         applyFilterButton.setOnAction(e -> {
-            String selectedType = crimeTypeComboBox.getValue();
-            System.out.println("Filtering by crime type: " + selectedType);
+            //String selectedType = crimeTypeComboBox.getValue();
+            //System.out.println("Filtering by crime type: " + selectedType);
             // Add your filtering logic here
             String mapType = mapTypeComboBox.getValue();
             overlay.setMapType(mapType);
@@ -223,7 +223,11 @@ public class BatMapApplication {
         });
 
         resetButton.setOnAction(e -> {
-            crimeTypeComboBox.getSelectionModel().selectFirst();
+            //crimeTypeComboBox.getSelectionModel().selectFirst();
+            mapTypeComboBox.getSelectionModel().selectFirst();
+            categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            filterComboBox.getSelectionModel().selectFirst();
+            assessmentComboBox.getSelectionModel().selectFirst();
             System.out.println("Filters reset");
             // Add your reset logic here
         });
