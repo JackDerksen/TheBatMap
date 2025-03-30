@@ -145,8 +145,18 @@ public class BatMapApplication {
         Label filterLabel = new Label("Filter Crime Types");
         filterLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-        // Create a combo box for crime types
-        String[] crimeTypes = {"All", "Theft", "Assault", "Break & Enter", "Drugs"};
+// Create a combo box for crime types
+        String[] crimeTypes = {"All", "Theft Under $5000", "Theft Over $5000", "Theft of Motor Vehicle",
+                "Assault", "Break and Enter Residential", "Break and Enter Commercial",
+                "Drugs", "Robbery Personal", "Robbery Commercial", "Fraud - Financial",
+                "Fraud Personal", "Fraud General", "Internet Fraud", "Mischief - Property",
+                "Weapons Complaint", "Weapons Complaint Firearm", "Criminal Flight Event",
+                "Impaired Driving", "Homicide", "Graffiti", "Trespassing", "Possession Stolen Property",
+                "Fire Arson", "Recovered Motor Vehicle", "Trouble with Person", "Dispute",
+                "Disturbance", "Suspicious Person", "Suspicious Vehicle", "Intoxicated Person",
+                "Liquor Act", "Counterfeit Money", "Indecent Act", "Public Mischief",
+                "Property Damage", "Abandoned Vehicle", "Dangerous Condition", "Bomb Threat",
+                "Technology/Internet Crime", "Labour Dispute", "Workplace Accident", "Public Health Act"};
         ComboBox<String> crimeTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(crimeTypes));
         crimeTypeComboBox.setPrefWidth(180);
         crimeTypeComboBox.getSelectionModel().selectFirst(); // Select "All" by default
