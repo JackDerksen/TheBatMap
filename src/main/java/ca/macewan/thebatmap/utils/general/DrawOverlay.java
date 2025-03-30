@@ -54,6 +54,10 @@ public class DrawOverlay {
     }
 
     public String[] getFilters(String newValue) {
+        if (newValue == null) {
+            return new String[0]; // Empty array if null, catch null pointer exception
+        }
+
         switch (newValue) {
             case "Category" -> filterArray = pixels.getCrimeCategories();
             case "Group" -> filterArray = pixels.getCrimeGroups();
