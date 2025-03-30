@@ -14,74 +14,54 @@ public class DrawOverlay {
     private static final int width = CoordinateToPixel.getMapWidth() + 1;
     private static final int height = CoordinateToPixel.getMapHeight() + 1;
     private static final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    private final String[] mapTypeArray = new String[]{"Crime", "Property"};
     private String mapType = "";
     private String categoryOrGroup = "";
     private String filter = "";
     private String assessment = "";
-    private String[] categoryOrGroupArray;
-    private Set<String> filterArray;
-    private Set<String> assessmentClass;
+    private final String[] mapTypeArray = new String[]{"Crime", "Property"};
+    private final String[] crimeCategoryArray = new String[]{"Category", "Group", "Type", "None"};
+    private final String[] propertyCategoryArray = new String[]{"Ward", "Neighbourhood", "None"};
 
-    public DrawOverlay() {//static void main(String[] args) {
-        try {
-            pixels.loadData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public DrawOverlay() {
+        try { pixels.loadData(); }
+        catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public String[] getMapTypeArray() {
-        return mapTypeArray;
-    }
+    public void setMapType(String mapType) { this.mapType = mapType; }
 
-    public void setMapType(String mapType) {
-        this.mapType = mapType;
-    }
+    public void setCategoryOrGroup(String categoryOrGroup) { this.categoryOrGroup = categoryOrGroup; }
+
+    public void setFilter(String filter) { this.filter = filter; }
+
+    public void setAssessment(String assessment) { this.assessment = assessment; }
+
+    public String[] getMapTypeArray() { return mapTypeArray; }
 
     public String[] getCategoryOrGroup(String newValue) {
-        if (newValue.equals("Crime")) {
-            categoryOrGroupArray = new String[]{"Category", "Group", "Type"};
-        }
-        else {
-            categoryOrGroupArray = new String[]{"Ward", "Neighbourhood"};
-        }
-        return categoryOrGroupArray;
-    }
-
-    public void setCategoryOrGroup(String categoryOrGroup) {
-        this.categoryOrGroup = categoryOrGroup;
+        if (newValue.equals("Crime")) { return crimeCategoryArray; }
+        else { return propertyCategoryArray; }
     }
 
     public String[] getFilters(String newValue) {
-        if (newValue == null) {
-            return new String[0]; // Empty array if null, catch null pointer exception
-        }
-
+        Set<String> filterArray = new LinkedHashSet<>();
         switch (newValue) {
             case "Category" -> filterArray = pixels.getCrimeCategories();
             case "Group" -> filterArray = pixels.getCrimeGroups();
             case "Type" -> filterArray = pixels.getCrimeTypes();
             case "Ward" -> filterArray = pixels.getWards();
-            default -> filterArray = pixels.getNeighborhoods();
+            case "Neighbourhood" -> filterArray = pixels.getNeighborhoods();
+            case null, default -> filterArray.add("None");
         }
         return filterArray.toArray(new String[0]);
     }
 
-    public void setFilter(String filter) {
-        this.filter = filter;
-    }
-
     public String[] getAssessmentClass(String newValue) {
         if (newValue.equals("Property")) {
-            assessmentClass = pixels.getAssessmentClasses();
-            return assessmentClass.toArray(new String[0]);
+            Set<String> assessmentClasses = pixels.getAssessmentClasses();
+            assessmentClasses.add("None");
+            return assessmentClasses.toArray(new String[0]);
         }
-        return new String[]{""};
-    }
-
-    public void setAssessment(String assessment) {
-        this.assessment = assessment;
+        return new String[]{"None"};
     }
 
     public void setAll(String mapType, String categoryOrGroup, String filter, String assessment) {
@@ -172,20 +152,19 @@ public class DrawOverlay {
         */
     }
 
-
     public void drawImage() {
         Map<String, Double> pixelValues = getPixelValues();
+        filter = filter.replace('/', '_');
+        String options = mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment;
 
         if (!pixelValues.isEmpty()) {
             Map<String, Color> gradientMap = gradientMap(pixelValues);
-
             Graphics2D g2d = img.createGraphics();
 
             g2d.setComposite(AlphaComposite.Clear);
             g2d.fillRect(0, 0, width, height);
 
             g2d.setComposite(AlphaComposite.Src);
-
             for (Map.Entry<String, Color> current : gradientMap.entrySet()) {
                 g2d.setColor(current.getValue());
                 String[] coordinate = current.getKey().split(",");
@@ -193,21 +172,16 @@ public class DrawOverlay {
                 int y = Integer.parseInt(coordinate[1]);
                 g2d.fillRect(x, y, 5, 5); //TODO Change pixel size
             }
-
             g2d.dispose();
 
-            filter = filter.replace('/', '_');
-
-            File outputfile = new File(GenerateKeyCSV.getOutputDir() + mapType + "_" +
-                    categoryOrGroup + "_" + filter + "_" + assessment + ".png");
+            File outputfile = new File(GenerateKeyCSV.getOutputDir() + options + ".png");
 
             try {
                 ImageIO.write(img, "png", outputfile);
                 System.out.println("Image created at " + outputfile);
-            } catch (IOException _) {
-            }
+            } catch (IOException _) {}
         }
-        else System.out.println("Empty: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
+        else System.out.println("Empty: " + options);
     }
 
     private Map<String, Double> getPixelValues() {
@@ -224,7 +198,6 @@ public class DrawOverlay {
                     case "Type" -> crimeData.getGroupTypeCount(filter);
                     default -> crimeData.getCount();
                 };
-
                 if (count > 0) pixelValues.put(entry.getKey(), count);
             }
         }
@@ -235,18 +208,12 @@ public class DrawOverlay {
                 Map<String, Integer> propertyMap = null;
                 Map<String, Integer> assessmentMap = null;
 
-                if (!categoryOrGroup.isEmpty()) {
-                    if (categoryOrGroup.equals("Ward")) {
-                        propertyMap = propertyValues.getWardCount();
-                    }
-                    else {
-                        propertyMap = propertyValues.getNeighborhoodCount();
-                    }
+                if (!categoryOrGroup.equals("None")) {
+                    if (categoryOrGroup.equals("Ward")) { propertyMap = propertyValues.getWardCount(); }
+                    else { propertyMap = propertyValues.getNeighborhoodCount(); }
                 }
 
-                if (!assessment.isEmpty()) {
-                    assessmentMap = propertyValues.getAssessmentClassCount();
-                }
+                if (!assessment.equals("None")) { assessmentMap = propertyValues.getAssessmentClassCount(); }
 
                 if ((propertyMap == null || propertyMap.containsKey(filter)) &&
                         (assessmentMap == null || assessmentMap.containsKey(assessment))) {
@@ -272,7 +239,6 @@ public class DrawOverlay {
             normalized = Math.min(1.0, current.getValue() / bounds.get(1));
             colorMap.put(current.getKey(), getGradientColor(normalized));
         }
-
         return colorMap;
     }
 
@@ -300,7 +266,6 @@ public class DrawOverlay {
         return new Color(r, g, b);
     }
 
-
     private static List<Double> detectOutlier(Map<String, Double> pixelValues) {
         // Sort data
         List<Double> sortedData = pixelValues.values().stream().sorted().collect(Collectors.toList());
@@ -317,15 +282,6 @@ public class DrawOverlay {
 
         System.out.println("q1: " + q1 + " q3: " + q3 + " iqr: " + iqr);
         System.out.println("Lower bound: " + lowerBound + " Upper bound: " + upperBound);
-
-        /*
-        System.out.println("Outliers:");
-        for (double num : sortedData) {
-            if (num < lowerBound || num > upperBound) {
-                System.out.println(num);
-            }
-        }
-        */
 
         List<Double> bounds = new ArrayList<>();
         bounds.add(lowerBound);
