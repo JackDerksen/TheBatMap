@@ -1,5 +1,6 @@
 package ca.macewan.thebatmap.app;
 
+import ca.macewan.thebatmap.utils.general.DrawOverlay;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -8,8 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Polygon;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -23,6 +22,7 @@ public class BatMapApplication {
     private static final String CITY_MAP_PATH = "/ca/macewan/thebatmap/assets/edmonton.png";
     private static final String VIEW_FILE_PATH = "/ca/macewan/thebatmap/views/MainView.fxml";
     private static final String CSS_FILE_PATH = "/ca/macewan/thebatmap/styles/MainStyle.css";
+    private static final DrawOverlay overlay = new DrawOverlay();
 
     // Application components
     private Stage stage;
@@ -145,7 +145,27 @@ public class BatMapApplication {
         Label filterLabel = new Label("Filter Crime Types");
         filterLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-// Create a combo box for crime types
+        String[] mapTypeArray = overlay.getMapTypeArray();
+        ComboBox<String> mapTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(mapTypeArray));
+        mapTypeComboBox.setPrefWidth(180);
+        mapTypeComboBox.getSelectionModel().selectFirst();
+
+        String[] categoryOrGroup = overlay.getCategoryOrGroup(mapTypeComboBox.getValue());
+        ComboBox<String> categoryOrGroupComboBox = new ComboBox<>(FXCollections.observableArrayList(categoryOrGroup));
+        categoryOrGroupComboBox.setPrefWidth(180);
+        categoryOrGroupComboBox.getSelectionModel().selectFirst();
+
+        String[] filter = overlay.getFilters(categoryOrGroupComboBox.getValue());
+        ComboBox<String> filterComboBox = new ComboBox<>(FXCollections.observableArrayList(filter));
+        filterComboBox.setPrefWidth(180);
+        filterComboBox.getSelectionModel().selectFirst();
+
+        String[] assessmentClass = overlay.getAssessmentClass();
+        ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
+        assessmentComboBox.setPrefWidth(180);
+        assessmentComboBox.getSelectionModel().selectFirst();
+
+        // Create a combo box for crime types
         String[] crimeTypes = {"All", "Theft Under $5000", "Theft Over $5000", "Theft of Motor Vehicle",
                 "Assault", "Break and Enter Residential", "Break and Enter Commercial",
                 "Drugs", "Robbery Personal", "Robbery Commercial", "Fraud - Financial",
@@ -170,10 +190,27 @@ public class BatMapApplication {
         buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
 
         // Add event handlers
+        mapTypeComboBox.getSelectionModel().selectedItemProperty().addListener((_, _,
+                                                                                newValue) -> {
+            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(newValue)));
+            categoryOrGroupComboBox.getSelectionModel().selectFirst();
+        });
+
+        categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _,
+                                                                                newValue) -> {
+            filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
+            filterComboBox.getSelectionModel().selectFirst();
+        });
+
         applyFilterButton.setOnAction(e -> {
             String selectedType = crimeTypeComboBox.getValue();
             System.out.println("Filtering by crime type: " + selectedType);
             // Add your filtering logic here
+            overlay.setMapType(mapTypeComboBox.getValue());
+            overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
+            overlay.setFilter(filterComboBox.getValue());
+            overlay.setAssessment(assessmentComboBox.getValue());
+            overlay.drawImage();
         });
 
         resetButton.setOnAction(e -> {
@@ -187,7 +224,11 @@ public class BatMapApplication {
                 panelTitle,
                 new Separator(), // Add a separator for visual distinction
                 filterLabel,
-                crimeTypeComboBox,
+                mapTypeComboBox,
+                categoryOrGroupComboBox,
+                filterComboBox,
+                assessmentComboBox,
+                //crimeTypeComboBox,
                 buttonContainer
         );
 
