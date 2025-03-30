@@ -142,8 +142,17 @@ public class BatMapApplication {
         panelTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
 
         // Create a label for the filter
-        Label filterLabel = new Label("Filter Crime Types");
+        Label mapTypeLabel = new Label("Map Type");
+        mapTypeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        Label categoryOrGroupLabel = new Label("Filter Group");
+        categoryOrGroupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        Label filterLabel = new Label("Filter");
         filterLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        Label assessmentClassLabel = new Label("Assessment Class");
+        assessmentClassLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
 
         String[] mapTypeArray = overlay.getMapTypeArray();
         ComboBox<String> mapTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(mapTypeArray));
@@ -164,22 +173,6 @@ public class BatMapApplication {
         ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
         assessmentComboBox.setPrefWidth(180);
         assessmentComboBox.getSelectionModel().selectFirst();
-
-        // Create a combo box for crime types
-//        String[] crimeTypes = {"All", "Theft Under $5000", "Theft Over $5000", "Theft of Motor Vehicle",
-//                "Assault", "Break and Enter Residential", "Break and Enter Commercial",
-//                "Drugs", "Robbery Personal", "Robbery Commercial", "Fraud - Financial",
-//                "Fraud Personal", "Fraud General", "Internet Fraud", "Mischief - Property",
-//                "Weapons Complaint", "Weapons Complaint Firearm", "Criminal Flight Event",
-//                "Impaired Driving", "Homicide", "Graffiti", "Trespassing", "Possession Stolen Property",
-//                "Fire Arson", "Recovered Motor Vehicle", "Trouble with Person", "Dispute",
-//                "Disturbance", "Suspicious Person", "Suspicious Vehicle", "Intoxicated Person",
-//                "Liquor Act", "Counterfeit Money", "Indecent Act", "Public Mischief",
-//                "Property Damage", "Abandoned Vehicle", "Dangerous Condition", "Bomb Threat",
-//                "Technology/Internet Crime", "Labour Dispute", "Workplace Accident", "Public Health Act"};
-//        ComboBox<String> crimeTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(crimeTypes));
-//        crimeTypeComboBox.setPrefWidth(180);
-//        crimeTypeComboBox.getSelectionModel().selectFirst(); // Select "All" by default
 
         // Create buttons for additional actions
         Button applyFilterButton = new Button("Apply Filter");
@@ -206,42 +199,35 @@ public class BatMapApplication {
         });
 
         applyFilterButton.setOnAction(e -> {
-            //String selectedType = crimeTypeComboBox.getValue();
-            //System.out.println("Filtering by crime type: " + selectedType);
             // Add your filtering logic here
-            String mapType = mapTypeComboBox.getValue();
-            overlay.setMapType(mapType);
+            overlay.setMapType(mapTypeComboBox.getValue());
             overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
             overlay.setFilter(filterComboBox.getValue());
-            if (mapType.equals("Crime")) {
-                overlay.setAssessment("");
-            }
-            else {
-                overlay.setAssessment(assessmentComboBox.getValue());
-            }
+            overlay.setAssessment(assessmentComboBox.getValue());
             overlay.drawImage();
         });
 
         resetButton.setOnAction(e -> {
-            //crimeTypeComboBox.getSelectionModel().selectFirst();
+            // Add your reset logic here
             mapTypeComboBox.getSelectionModel().selectFirst();
             categoryOrGroupComboBox.getSelectionModel().selectFirst();
             filterComboBox.getSelectionModel().selectFirst();
             assessmentComboBox.getSelectionModel().selectFirst();
             System.out.println("Filters reset");
-            // Add your reset logic here
         });
 
         // Add all components to the VBox
         leftControls.getChildren().addAll(
                 panelTitle,
                 new Separator(), // Add a separator for visual distinction
-                filterLabel,
+                mapTypeLabel,
                 mapTypeComboBox,
+                categoryOrGroupLabel,
                 categoryOrGroupComboBox,
+                filterLabel,
                 filterComboBox,
+                assessmentClassLabel,
                 assessmentComboBox,
-                //crimeTypeComboBox,
                 buttonContainer
         );
 
