@@ -152,37 +152,70 @@ public class DrawOverlay {
         */
     }
 
-    public void drawImage() {
+    /**
+     * Generates and saves a heat map overlay based on current filter settings
+     * @return Path to the generated image file, or null if generation failed
+     */
+    public String drawImage() {
         Map<String, Double> pixelValues = getPixelValues();
-        filter = filter.replace('/', '_');
-        String options = mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment;
 
         if (!pixelValues.isEmpty()) {
             Map<String, Color> gradientMap = gradientMap(pixelValues);
+
+            // Create a fresh image
             Graphics2D g2d = img.createGraphics();
 
+            // Clear the image completely
             g2d.setComposite(AlphaComposite.Clear);
             g2d.fillRect(0, 0, width, height);
+            g2d.setComposite(AlphaComposite.SrcOver);
 
-            g2d.setComposite(AlphaComposite.Src);
+            // Only draw the colored dots, leaving the rest transparent
             for (Map.Entry<String, Color> current : gradientMap.entrySet()) {
                 g2d.setColor(current.getValue());
                 String[] coordinate = current.getKey().split(",");
                 int x = Integer.parseInt(coordinate[0]);
                 int y = Integer.parseInt(coordinate[1]);
-                g2d.fillRect(x, y, 5, 5); //TODO Change pixel size
+                g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
             }
+
             g2d.dispose();
 
-            File outputfile = new File(GenerateKeyCSV.getOutputDir() + options + ".png");
+            // Safe filename cause shit won't find the image so just force every extension check
+            String safeFilter = filter.replace('/', '_').replace('\\', '_')
+                    .replace(':', '_').replace('*', '_')
+                    .replace('?', '_').replace('"', '_')
+                    .replace('<', '_').replace('>', '_')
+                    .replace('|', '_');
+
+            String fileName = mapType + "_" + categoryOrGroup + "_" + safeFilter + "_" + assessment + ".png";
+            String outputDir = GenerateKeyCSV.getOutputDir();
+
+            // Ensure directory exists
+            File directory = new File(outputDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            File outputFile = new File(outputDir + fileName);
 
             try {
-                ImageIO.write(img, "png", outputfile);
-                System.out.println("Image created at " + outputfile);
-            } catch (IOException _) {}
+                // Write using PNG format which supports transparency
+                ImageIO.write(img, "png", outputFile);
+                System.out.println("Image created at " + outputFile.getAbsolutePath());
+
+                return outputFile.getAbsolutePath();
+            } catch (IOException e) {
+                System.err.println("Error creating image: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            System.out.println("Empty: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
+            return null;
         }
-        else System.out.println("Empty: " + options);
     }
+
 
     private Map<String, Double> getPixelValues() {
         Map<String, Double> pixelValues = new HashMap<>();

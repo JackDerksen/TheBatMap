@@ -11,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -29,6 +30,7 @@ public class BatMapApplication {
     private Scene scene;
     private BorderPane root;
     private ImageView mapView;
+    private ImageView overlayView;
 
     /**
      * Initialize and start the application
@@ -199,20 +201,63 @@ public class BatMapApplication {
         });
 
         applyFilterButton.setOnAction(e -> {
-            // Add your filtering logic here
-            overlay.setMapType(mapTypeComboBox.getValue());
-            overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
-            overlay.setFilter(filterComboBox.getValue());
-            overlay.setAssessment(assessmentComboBox.getValue());
-            overlay.drawImage();
+            String mapType = mapTypeComboBox.getValue();
+            if (mapType == null) return;
+
+            overlay.setMapType(mapType);
+
+            if (categoryOrGroupComboBox.getValue() == null) {
+                overlay.setCategoryOrGroup(mapTypeComboBox.getValue());
+            }
+
+            String filterStr = filterComboBox.getValue();
+            if (filterStr != null) {
+                overlay.setFilter(filterStr);
+            }
+
+            if (mapType.equals("Crime")) {
+                overlay.setAssessment("");
+            } else {
+                String assessment = assessmentComboBox.getValue();
+                if (assessment != null) {
+                    overlay.setAssessment(assessment);
+                }
+            }
+
+            // Add the heat map image
+            String imagePath = overlay.drawImage();
+            displayOverlay(imagePath);
         });
 
+        // Reset Button functionality
         resetButton.setOnAction(e -> {
-            // Add your reset logic here
+            // Reset all combo box selections to the first item
             mapTypeComboBox.getSelectionModel().selectFirst();
             categoryOrGroupComboBox.getSelectionModel().selectFirst();
             filterComboBox.getSelectionModel().selectFirst();
             assessmentComboBox.getSelectionModel().selectFirst();
+
+            // Reset the overlay object's internal state
+            overlay.setMapType("");
+            overlay.setCategoryOrGroup("");
+            overlay.setFilter("");
+            overlay.setAssessment("");
+
+            // Remove the overlay from the UI
+            try {
+                // Get the map container
+                StackPane mapContainer = (StackPane) mapView.getParent();
+
+                // Remove any overlay views
+                mapContainer.getChildren().removeIf(node ->
+                        node != mapView && node instanceof ImageView);
+
+                System.out.println("Overlay cleared");
+            } catch (Exception ex) {
+                System.err.println("Error clearing overlay: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+
             System.out.println("Filters reset");
         });
 
@@ -232,6 +277,53 @@ public class BatMapApplication {
         );
 
         return leftControls;
+    }
+
+    /**
+     * Displays the overlay image on top of the map
+     * @param imagePath Path to the overlay image
+     */
+    private void displayOverlay(String imagePath) {
+        try {
+            if (imagePath == null || imagePath.isEmpty()) {
+                System.err.println("Error displaying overlay: No image path provided");
+                return;
+            }
+
+            // Get the map container
+            StackPane mapContainer = (StackPane) mapView.getParent();
+
+            // Remove previous overlay if it exists
+            mapContainer.getChildren().removeIf(node ->
+                    node != mapView && node instanceof ImageView && "overlay".equals(node.getId()));
+
+            // Create a File object from the path
+            File imageFile = new File(imagePath);
+            if (!imageFile.exists()) {
+                System.err.println("Error displaying overlay: File not found at " + imagePath);
+                return;
+            }
+
+            // Load the image
+            String imageUrl = imageFile.toURI().toString();
+            Image overlayImage = new Image(imageUrl);
+
+            // Create the overlay ImageView
+            ImageView overlayView = new ImageView(overlayImage);
+            overlayView.setId("overlay"); // Set an ID to identify it later for removal
+            overlayView.setPreserveRatio(true);
+            overlayView.fitWidthProperty().bind(mapView.fitWidthProperty());
+            overlayView.fitHeightProperty().bind(mapView.fitHeightProperty());
+
+            // Add the overlay on top of the map
+            mapContainer.getChildren().add(overlayView);
+
+            System.out.println("Overlay successfully displayed");
+
+        } catch (Exception e) {
+            System.err.println("Error displaying overlay: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
