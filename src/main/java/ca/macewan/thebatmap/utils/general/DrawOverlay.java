@@ -181,6 +181,7 @@ public class DrawOverlay {
 
             g2d.dispose();
 
+            //TODO Remember to remove this
             // Safe filename cause shit won't find the image so just force every extension check
             String safeFilter = filter.replace('/', '_').replace('\\', '_')
                     .replace(':', '_').replace('*', '_')

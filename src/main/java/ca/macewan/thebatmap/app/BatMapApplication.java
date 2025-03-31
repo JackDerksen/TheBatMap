@@ -201,28 +201,10 @@ public class BatMapApplication {
         });
 
         applyFilterButton.setOnAction(e -> {
-            String mapType = mapTypeComboBox.getValue();
-            if (mapType == null) return;
-
-            overlay.setMapType(mapType);
-
-            if (categoryOrGroupComboBox.getValue() == null) {
-                overlay.setCategoryOrGroup(mapTypeComboBox.getValue());
-            }
-
-            String filterStr = filterComboBox.getValue();
-            if (filterStr != null) {
-                overlay.setFilter(filterStr);
-            }
-
-            if (mapType.equals("Crime")) {
-                overlay.setAssessment("");
-            } else {
-                String assessment = assessmentComboBox.getValue();
-                if (assessment != null) {
-                    overlay.setAssessment(assessment);
-                }
-            }
+            overlay.setMapType(mapTypeComboBox.getValue());
+            overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
+            overlay.setFilter(filterComboBox.getValue());
+            overlay.setAssessment(assessmentComboBox.getValue());
 
             // Add the heat map image
             String imagePath = overlay.drawImage();
