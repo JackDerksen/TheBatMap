@@ -52,6 +52,7 @@ public class DrawOverlay {
 
     public String[] getFilters(String newValue) {
         Set<String> filterSet = new LinkedHashSet<>();
+        titleCaseToOriginalMap.clear(); // Clear previous mappings
 
         // Populate the filter set based on the selected category/group
         switch (newValue) {
@@ -76,24 +77,25 @@ public class DrawOverlay {
         // Add remaining items in alphabetical order
         List<String> sortedItems = new ArrayList<>(filterSet);
         Collections.sort(sortedItems);
-        result.addAll(sortedItems);
+
+        // Apply title case to each item and map to original
+        for (String item : sortedItems) {
+            if (item.equals("None") || item.equals("Other")) {
+                result.add(item);
+            } else {
+                String titleCased = toTitleCase(item);
+                result.add(titleCased);
+                // Store mapping from title case to original
+                titleCaseToOriginalMap.put(titleCased, item);
+            }
+        }
 
         // Add "Other" at the end if it existed
         if (hasOther) {
             result.add("Other");
         }
 
-        // Apply title case to each item (except "None" and "Other")
-        List<String> formattedList = new ArrayList<>();
-        for (String item : result) {
-            if (item.equals("None") || item.equals("Other")) {
-                formattedList.add(item);
-            } else {
-                formattedList.add(toTitleCase(item));
-            }
-        }
-
-        return formattedList.toArray(new String[0]);
+        return result.toArray(new String[0]);
     }
 
     public String[] getAssessmentClass(String newValue) {
@@ -110,23 +112,25 @@ public class DrawOverlay {
             // Create final list with special values in special positions
             List<String> finalList = new ArrayList<>();
             finalList.add("None"); // Always have None at the top
-            finalList.addAll(sortedList);
+
+            // Apply title case to each entry and map to original
+            for (String item : sortedList) {
+                // Keep "None" and "Other" as is
+                if (item.equals("None") || item.equals("Other")) {
+                    finalList.add(item);
+                } else {
+                    String titleCased = toTitleCase(item);
+                    finalList.add(titleCased);
+                    // Store mapping from title case to original
+                    titleCaseToOriginalMap.put(titleCased, item);
+                }
+            }
+
             if (hasOther) {
                 finalList.add("Other");
             }
 
-            // Apply title case to each entry
-            List<String> formattedList = new ArrayList<>();
-            for (String item : finalList) {
-                // Keep "None" and "Other" as is
-                if (item.equals("None") || item.equals("Other")) {
-                    formattedList.add(item);
-                } else {
-                    formattedList.add(toTitleCase(item));
-                }
-            }
-
-            return formattedList.toArray(new String[0]);
+            return finalList.toArray(new String[0]);
         }
         return new String[]{"None"};
     }
@@ -357,7 +361,21 @@ public class DrawOverlay {
     public String drawImage() {
         // Convert title case filter back to original if needed
         String originalFilter = titleCaseToOriginalMap.getOrDefault(filter, filter);
+        String originalAssessment = titleCaseToOriginalMap.getOrDefault(assessment, assessment);
+
+        System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter);
+        System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment);
+
+        // Temporarily store the original assessment
+        String tempAssessment = assessment;
+
+        // Replace the assessment with original version for filtering
+        assessment = originalAssessment;
+
         Map<String, Double> pixelValues = getPixelValues(originalFilter);
+
+        // Restore the display version
+        assessment = tempAssessment;
 
         // Handle both cases: data exists or no data
         Graphics2D g2d = img.createGraphics();
@@ -397,11 +415,6 @@ public class DrawOverlay {
             // Create a simple message for "no data" case
             System.out.println("No data matches filter: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
 
-            // Could optionally add a small message to the image
-            // g2d.setColor(new Color(255, 255, 255, 128)); // Semi-transparent white
-            // g2d.setFont(new Font("Arial", Font.BOLD, 24));
-            // g2d.drawString("No matching data", 50, 50);
-
             // We'll keep the image completely transparent and just create a blank overlay
             fileName = "no_data_" + System.currentTimeMillis() + ".png";
         }
@@ -421,7 +434,6 @@ public class DrawOverlay {
             return null;
         }
     }
-
 
     private Map<String, Double> getPixelValues(String filterValue) {
         Map<String, Double> pixelValues = new HashMap<>();
@@ -465,8 +477,8 @@ public class DrawOverlay {
                 // When filter is "None", we don't check for a specific key
                 boolean includeProperty = true;
 
-                if (propertyMap != null && !filter.equals("None")) {
-                    includeProperty = propertyMap.containsKey(filter);
+                if (propertyMap != null && !filterValue.equals("None")) {
+                    includeProperty = propertyMap.containsKey(filterValue);
                 }
 
                 if (assessmentMap != null && !assessment.equals("None")) {
@@ -479,6 +491,10 @@ public class DrawOverlay {
                 }
             }
         }
+
+        System.out.println("Found " + pixelValues.size() + " matching properties for filter: " +
+                mapType + "/" + categoryOrGroup + "/" + filterValue + "/" + assessment);
+
         return pixelValues;
     }
 
