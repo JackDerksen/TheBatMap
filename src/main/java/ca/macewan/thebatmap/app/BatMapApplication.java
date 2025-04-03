@@ -507,6 +507,30 @@ public class BatMapApplication {
         return leftControls;
     }
 
+    // Create definitions for crime-colour values
+    private String getCrimeLevelFromColor(javafx.scene.paint.Color color) {
+        // Extract RGB values (0-255 scale)
+        int red = (int)(color.getRed() * 255);
+        int green = (int)(color.getGreen() * 255);
+        int blue = (int)(color.getBlue() * 255);
+
+        // Determine crime level based on color
+        if (red > 200 && green < 100 && blue < 100) {
+            return "High Crime Area (>200 incidents/year)";
+        } else if (red > 150 || (red > 100 && green > 150 && green < 200)) {
+            return "Medium-High Crime Area (100-200 incidents/year)";
+        } else if (green > 150 && red > 100) {
+            return "Medium Crime Area (50-100 incidents/year)";
+        } else if (blue > 200 && red < 100 && green < 100) {
+            return "Low Crime Area (<50 incidents/year)";
+        } else if (color.getBrightness() < 0.3) {
+            return "Unknown/No Data";
+        } else {
+            // Default case
+            return "General area";
+        }
+    }
+
     /**
      * Displays the overlay image on top of the map
      * @param imagePath Path to the overlay image
@@ -542,6 +566,48 @@ public class BatMapApplication {
             overlayView.setPreserveRatio(true);
             overlayView.fitWidthProperty().bind(mapView.fitWidthProperty());
             overlayView.fitHeightProperty().bind(mapView.fitHeightProperty());
+
+            // Create tooltip for hover information
+            Tooltip hoverTooltip = new Tooltip();
+            hoverTooltip.setShowDelay(javafx.util.Duration.millis(100));
+            hoverTooltip.setShowDuration(javafx.util.Duration.seconds(10));
+            hoverTooltip.setStyle("-fx-font-size: 12px; -fx-background-color: rgba(0,0,0,0.8); " +
+                    "-fx-text-fill: white; -fx-padding: 5px;");
+
+            // Get pixel reader to detect colors under cursor
+            javafx.scene.image.PixelReader pixelReader = overlayImage.getPixelReader();
+
+            // Add mouse movement handler, This thing sucked
+            overlayView.setOnMouseMoved(event -> {
+                // Get pixel coordinates relative to the image view
+                double xScale = overlayImage.getWidth() / overlayView.getBoundsInLocal().getWidth();
+                double yScale = overlayImage.getHeight() / overlayView.getBoundsInLocal().getHeight();
+
+                int x = (int) (event.getX() * xScale);
+                int y = (int) (event.getY() * yScale);
+
+                // Make sure coordinates are within image bounds
+                if (x >= 0 && x < overlayImage.getWidth() && y >= 0 && y < overlayImage.getHeight()) {
+                    // Read the color at cursor position
+                    javafx.scene.paint.Color color = pixelReader.getColor(x, y);
+
+                    // Only show tooltip if the pixel has data (is not transparent)
+                    if (color.getOpacity() > 0.1) {
+                        String crimeLevel = getCrimeLevelFromColor(color);
+
+                        // Update tooltip text
+                        hoverTooltip.setText("Crime Level: " + crimeLevel);
+
+                        // Show tooltip near cursor
+                        hoverTooltip.show(overlayView,
+                                event.getScreenX() + 15,
+                                event.getScreenY() + 15);
+                    } else {
+                        // Hide tooltip when over transparent areas
+                        hoverTooltip.hide();
+                    }
+                }
+            });
 
             // Add the overlay on top of the map
             mapContainer.getChildren().add(overlayView);
