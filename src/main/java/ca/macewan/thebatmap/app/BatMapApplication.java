@@ -225,7 +225,7 @@ public class BatMapApplication {
         VBox legendPanel = createLegend();
 
         // Create buttons for additional actions
-        Button applyFilterButton = new Button("Apply Filter");
+        Button applyFilterButton = new Button("Create Map");
         Button resetButton = new Button("Reset");
 
         // Create an HBox to hold the buttons side by side
@@ -618,7 +618,7 @@ public class BatMapApplication {
             return "Unknown/No Data";
         } else {
             // Default case
-            return "Mixed correlation - No strong pattern between property values and crime rates";
+            return "Neutral correlation - No strong pattern between property values and crime rates";
         }
     }
 
@@ -810,7 +810,7 @@ public class BatMapApplication {
             legendItems.getChildren().addAll(
                     createLegendItem("Strong Positive", Color.rgb(0, 255, 0), "High property value, low crime"),
                     createLegendItem("Moderate Positive", Color.rgb(100, 255, 100), "Above avg. property, below avg. crime"),
-                    createLegendItem("Neutral", Color.rgb(150, 150, 150), "No strong correlation"),
+                    createLegendItem("Neutral", Color.rgb(50, 50, 220), "No strong correlation"),
                     createLegendItem("Moderate Negative", Color.rgb(255, 100, 0), "Below avg. property, above avg. crime"),
                     createLegendItem("Strong Negative", Color.rgb(255, 0, 0), "Low property value, high crime")
             );
