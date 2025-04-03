@@ -507,9 +507,11 @@ public class BatMapApplication {
         return leftControls;
     }
 
-    // Create definitions for crime-colour values
+    /**
+     * Gets crime level information based on pixel color
+     */
     private String getCrimeLevelFromColor(javafx.scene.paint.Color color) {
-        // Extract RGB values (0-255 scale)
+        // RGB values (0-255 scale)
         int red = (int)(color.getRed() * 255);
         int green = (int)(color.getGreen() * 255);
         int blue = (int)(color.getBlue() * 255);
@@ -528,6 +530,60 @@ public class BatMapApplication {
         } else {
             // Default case
             return "General area";
+        }
+    }
+
+    /**
+     * Gets property information based on pixel color
+     */
+    private String getPropertyInfoFromColor(javafx.scene.paint.Color color) {
+        // RGB values (0-255 scale)
+        int red = (int)(color.getRed() * 255);
+        int green = (int)(color.getGreen() * 255);
+        int blue = (int)(color.getBlue() * 255);
+
+        // Based on your property map color scheme (blue = low density, red = high density)
+        if (red > 200 && green < 100 && blue < 100) {
+            return "High Density (>500 properties)";
+        } else if (red > 150 && green > 100) {
+            return "Medium-High Density (300-500 properties)";
+        } else if (green > 200 && red < 100) {
+            return "Medium Density (100-300 properties)";
+        } else if (blue > 200 && red < 100 && green < 100) {
+            return "Low Density (<100 properties)";
+        } else if (color.getBrightness() < 0.3) {
+            return "Unknown/No Data";
+        } else {
+            // Default case
+            return "Cluster of properties";
+        }
+    }
+
+    /**
+     * Gets correlation information based on pixel color
+     */
+    private String getCorrelationInfoFromColor(javafx.scene.paint.Color color) {
+        // RGB values (0-255 scale)
+        int red = (int)(color.getRed() * 255);
+        int green = (int)(color.getGreen() * 255);
+        int blue = (int)(color.getBlue() * 255);
+
+        // Based on your correlation map color scheme (as described)
+        if (blue > 200 && red < 100 && green < 100) {
+            return "Positive Correlation\nHigh property value, Low crime rate";
+        } else if (green > 200 && red < 100 && blue < 100) {
+            return "Values Near Zero\nNo strong correlation between property values and crime";
+        } else if (red > 200 && green < 100 && blue < 100) {
+            return "Negative Correlation\nLow property value, High crime rate";
+        } else if (green > 150 && blue > 150) {
+            return "Slightly Positive/Neutral Correlation";
+        } else if (red > 150 && green > 150) {
+            return "Slightly Negative/Neutral Correlation";
+        } else if (color.getBrightness() < 0.3) {
+            return "Unknown/No Data";
+        } else {
+            // Default case
+            return "Mixed correlation";
         }
     }
 
@@ -574,10 +630,26 @@ public class BatMapApplication {
             hoverTooltip.setStyle("-fx-font-size: 12px; -fx-background-color: rgba(0,0,0,0.8); " +
                     "-fx-text-fill: white; -fx-padding: 5px;");
 
+            // Determine the current map type
+            String currentMapType;
+            if (imagePath.contains("correlation")) {
+                currentMapType = "Crime-Property Correlation";
+            } else {
+
+                if (imagePath.toLowerCase().contains("crime")) {
+                    currentMapType = "Crime";
+                } else if (imagePath.toLowerCase().contains("property")) {
+                    currentMapType = "Property";
+                } else {
+                    // Default case
+                    currentMapType = "Crime"; // Default to Crime if unknown
+                }
+            }
+
             // Get pixel reader to detect colors under cursor
             javafx.scene.image.PixelReader pixelReader = overlayImage.getPixelReader();
 
-            // Add mouse movement handler, This thing sucked
+            // Add mouse movement handler
             overlayView.setOnMouseMoved(event -> {
                 // Get pixel coordinates relative to the image view
                 double xScale = overlayImage.getWidth() / overlayView.getBoundsInLocal().getWidth();
@@ -593,10 +665,20 @@ public class BatMapApplication {
 
                     // Only show tooltip if the pixel has data (is not transparent)
                     if (color.getOpacity() > 0.1) {
-                        String crimeLevel = getCrimeLevelFromColor(color);
+                        // Determine tooltip content based on the current map type
+                        String tooltipText;
+
+                        if (currentMapType.equals("Crime-Property Correlation")) {
+                            tooltipText = getCorrelationInfoFromColor(color);
+                        } else if (currentMapType.equals("Property")) {
+                            tooltipText = "Property: " + getPropertyInfoFromColor(color);
+                        } else {
+                            // Default to Crime type
+                            tooltipText = "Crime Level: " + getCrimeLevelFromColor(color);
+                        }
 
                         // Update tooltip text
-                        hoverTooltip.setText("Crime Level: " + crimeLevel);
+                        hoverTooltip.setText(tooltipText);
 
                         // Show tooltip near cursor
                         hoverTooltip.show(overlayView,
@@ -608,6 +690,9 @@ public class BatMapApplication {
                     }
                 }
             });
+
+            // Hide tooltip when mouse exits the overlay
+            overlayView.setOnMouseExited(event -> hoverTooltip.hide());
 
             // Add the overlay on top of the map
             mapContainer.getChildren().add(overlayView);
