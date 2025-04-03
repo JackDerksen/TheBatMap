@@ -44,7 +44,6 @@ public class DrawOverlay {
         } else {
             // Add "None" as the first option in the property category array
             String[] result = new String[propertyCategoryArray.length + 1];
-            result[0] = "None";
             System.arraycopy(propertyCategoryArray, 0, result, 1, propertyCategoryArray.length);
             return result;
         }

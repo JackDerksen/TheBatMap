@@ -5,11 +5,14 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -136,7 +139,7 @@ public class BatMapApplication {
     private VBox CreateLeftPanel() {
         // Create a VBox with spacing between elements
         VBox leftControls = new VBox(10);
-        leftControls.setPrefWidth(200);
+        leftControls.setPrefWidth(220);
         leftControls.setPadding(new Insets(10));
         leftControls.setStyle("-fx-background-color: #333333;");
 
@@ -153,14 +156,14 @@ public class BatMapApplication {
         Button propertyButton = new Button("Property");
 
         // Set equal widths for buttons
-        crimeButton.setPrefWidth(90);
-        propertyButton.setPrefWidth(90);
+        crimeButton.setPrefWidth(100);
+        propertyButton.setPrefWidth(100);
 
         mapTypeButtons.getChildren().addAll(crimeButton, propertyButton);
 
         // Add correlation button
         Button correlationButton = new Button("Crime-Property Correlation");
-        correlationButton.setPrefWidth(190);
+        correlationButton.setPrefWidth(200);
         correlationButton.setStyle("-fx-background-color: #6200EA; -fx-text-fill: white;");
         Tooltip correlationTooltip = new Tooltip("Show relationship between crime rates and property values");
         Tooltip.install(correlationButton, correlationTooltip);
@@ -190,17 +193,17 @@ public class BatMapApplication {
         // Set up ComboBoxes
         String[] categoryOrGroup = overlay.getCategoryOrGroup(currentMapType);
         ComboBox<String> categoryOrGroupComboBox = new ComboBox<>(FXCollections.observableArrayList(categoryOrGroup));
-        categoryOrGroupComboBox.setPrefWidth(180);
+        categoryOrGroupComboBox.setPrefWidth(200);
         categoryOrGroupComboBox.getSelectionModel().selectFirst();
 
         String[] filter = overlay.getFilters(categoryOrGroupComboBox.getValue());
         ComboBox<String> filterComboBox = new ComboBox<>(FXCollections.observableArrayList(filter));
-        filterComboBox.setPrefWidth(180);
+        filterComboBox.setPrefWidth(200);
         filterComboBox.getSelectionModel().selectFirst();
 
         String[] assessmentClass = overlay.getAssessmentClass(currentMapType);
         ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
-        assessmentComboBox.setPrefWidth(180);
+        assessmentComboBox.setPrefWidth(200);
         assessmentComboBox.getSelectionModel().selectFirst();
 
         // Default selections to "None" where applicable
@@ -217,6 +220,39 @@ public class BatMapApplication {
         // Hide assessment class for Crime mode
         assessmentClassLabel.setVisible(currentMapType.equals("Property"));
         assessmentComboBox.setVisible(currentMapType.equals("Property"));
+
+        // Create a legend panel
+        VBox legendPanel = createLegend();
+
+        // Create buttons for additional actions
+        Button applyFilterButton = new Button("Apply Filter");
+        Button resetButton = new Button("Reset");
+
+        // Create an HBox to hold the buttons side by side
+        HBox buttonContainer = new HBox(10);
+        buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
+
+        // Add the legend to left controls panel
+        leftControls.getChildren().addAll(
+                panelTitle,
+                new Separator(),
+                mapTypeLabel,
+                mapTypeButtons,
+                correlationButton,
+                new Separator(),
+                categoryOrGroupLabel,
+                categoryOrGroupComboBox,
+                filterLabel,
+                filterComboBox,
+                assessmentClassLabel,
+                assessmentComboBox,
+                buttonContainer
+        );
+
+        // Add legend components
+        Separator legendSeparator = new Separator();
+        legendSeparator.setPadding(new Insets(10, 0, 5, 0));
+        leftControls.getChildren().addAll(legendSeparator, legendPanel);
 
         // Add button event handlers
         crimeButton.setOnAction(e -> {
@@ -266,6 +302,10 @@ public class BatMapApplication {
             // Show/hide assessment class based on map type
             assessmentClassLabel.setVisible(false);
             assessmentComboBox.setVisible(false);
+
+            // Update legend
+            VBox legendItems = (VBox) legendPanel.getUserData();
+            updateLegendItems(legendItems, "Crime");
         });
 
         propertyButton.setOnAction(e -> {
@@ -315,6 +355,10 @@ public class BatMapApplication {
             // Show/hide assessment class based on map type
             assessmentClassLabel.setVisible(true);
             assessmentComboBox.setVisible(true);
+
+            // Update legend
+            VBox legendItems = (VBox) legendPanel.getUserData();
+            updateLegendItems(legendItems, "Property");
         });
 
         // Add correlation button event handler
@@ -338,6 +382,10 @@ public class BatMapApplication {
                 // Generate correlation overlay immediately
                 String imagePath = overlay.drawCorrelationImage();
                 displayOverlay(imagePath);
+
+                // Update legend
+                VBox legendItems = (VBox) legendPanel.getUserData();
+                updateLegendItems(legendItems, "Crime-Property Correlation");
             } else {
                 // Exit correlation mode
                 correlationButton.setStyle(correlationStyle);
@@ -371,16 +419,13 @@ public class BatMapApplication {
                 } catch (Exception ex) {
                     System.err.println("Error clearing overlay: " + ex.getMessage());
                 }
+                // Restore legend based on previous selection
+                VBox legendItems = (VBox) legendPanel.getUserData();
+                String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
+                updateLegendItems(legendItems, mapType);
             }
         });
 
-        // Create buttons for additional actions
-        Button applyFilterButton = new Button("Apply Filter");
-        Button resetButton = new Button("Reset");
-
-        // Create an HBox to hold the buttons side by side
-        HBox buttonContainer = new HBox(10);
-        buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
 
         // Add event handlers for the other controls
         categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
@@ -486,23 +531,11 @@ public class BatMapApplication {
             }
 
             System.out.println("Filters reset");
-        });
 
-        leftControls.getChildren().addAll(
-                panelTitle,
-                new Separator(),
-                mapTypeLabel,
-                mapTypeButtons,
-                correlationButton,
-                new Separator(),
-                categoryOrGroupLabel,
-                categoryOrGroupComboBox,
-                filterLabel,
-                filterComboBox,
-                assessmentClassLabel,
-                assessmentComboBox,
-                buttonContainer
-        );
+            // Reset legend to crime (default)
+            VBox legendItems = (VBox) legendPanel.getUserData();
+            updateLegendItems(legendItems, "Crime");
+        });
 
         return leftControls;
     }
@@ -518,18 +551,18 @@ public class BatMapApplication {
 
         // Determine crime level based on color
         if (red > 200 && green < 100 && blue < 100) {
-            return "High Crime Area (>200 incidents/year)";
+            return "High Crime Area (>50 incidents/year)\nPotential safety concern";
         } else if (red > 150 || (red > 100 && green > 150 && green < 200)) {
-            return "Medium-High Crime Area (100-200 incidents/year)";
+            return "Medium-High Crime Area (35-50 incidents/year)";
         } else if (green > 150 && red > 100) {
-            return "Medium Crime Area (50-100 incidents/year)";
+            return "Medium Crime Area (20-35 incidents/year)";
         } else if (blue > 200 && red < 100 && green < 100) {
-            return "Low Crime Area (<50 incidents/year)";
+            return "Low Crime Area (<20 incidents/year)\nGenerally safe neighborhood";
         } else if (color.getBrightness() < 0.3) {
             return "Unknown/No Data";
         } else {
             // Default case
-            return "General area";
+            return "General area - Click 'Apply Filter' to see more specific crime data";
         }
     }
 
@@ -542,20 +575,20 @@ public class BatMapApplication {
         int green = (int)(color.getGreen() * 255);
         int blue = (int)(color.getBlue() * 255);
 
-        // Based on your property map color scheme (blue = low density, red = high density)
+        // Based on property map color scheme
         if (red > 200 && green < 100 && blue < 100) {
-            return "High Density (>500 properties)";
+            return "High Property Value (>$1.5M)\nTypically high-end neighborhoods";
         } else if (red > 150 && green > 100) {
-            return "Medium-High Density (300-500 properties)";
+            return "Medium-High Property Value ($1M-$1.5M)";
         } else if (green > 200 && red < 100) {
-            return "Medium Density (100-300 properties)";
+            return "Medium Property Value ($500K-$1M)";
         } else if (blue > 200 && red < 100 && green < 100) {
-            return "Low Density (<100 properties)";
+            return "Low Property Value (<$500K)\nMore affordable housing options";
         } else if (color.getBrightness() < 0.3) {
             return "Unknown/No Data";
         } else {
             // Default case
-            return "Cluster of properties";
+            return "Mixed property values - Apply filters for more specific information";
         }
     }
 
@@ -568,22 +601,24 @@ public class BatMapApplication {
         int green = (int)(color.getGreen() * 255);
         int blue = (int)(color.getBlue() * 255);
 
-        // Based on your correlation map color scheme (as described)
-        if (blue > 200 && red < 100 && green < 100) {
-            return "Positive Correlation\nHigh property value, Low crime rate";
-        } else if (green > 200 && red < 100 && blue < 100) {
-            return "Values Near Zero\nNo strong correlation between property values and crime";
+        // Based on the actual implementation in DrawOverlay.getCorrelationColor
+        if (green > 200 && blue < 100 && red < 100) {
+            return "Strong Positive Correlation\nHigh property value, low crime rate\nTypically desirable neighborhoods";
+        } else if (green > 150 && blue < 150 && red < 150) {
+            return "Moderate Positive Correlation\nAbove average property value, below average crime";
         } else if (red > 200 && green < 100 && blue < 100) {
-            return "Negative Correlation\nLow property value, High crime rate";
+            return "Strong Negative Correlation\nLow property value, high crime rate\nPotentially concerning areas";
+        } else if (red > 150 && green < 150 && blue < 150) {
+            return "Moderate Negative Correlation\nBelow average property value, above average crime";
         } else if (green > 150 && blue > 150) {
-            return "Slightly Positive/Neutral Correlation";
+            return "Slightly Positive/Neutral Correlation\nBalanced property values and crime rates";
         } else if (red > 150 && green > 150) {
-            return "Slightly Negative/Neutral Correlation";
+            return "Slightly Negative/Neutral Correlation\nMixed indicators";
         } else if (color.getBrightness() < 0.3) {
             return "Unknown/No Data";
         } else {
             // Default case
-            return "Mixed correlation";
+            return "Mixed correlation - No strong pattern between property values and crime rates";
         }
     }
 
@@ -716,5 +751,104 @@ public class BatMapApplication {
         } catch (Exception e) {
             System.err.println("Failed to load CSS: " + e.getMessage());
         }
+    }
+
+    /**
+     * Creates a legend panel that updates based on the current map type
+     * @return VBox containing the legend
+     */
+    private VBox createLegend() {
+        VBox legendPanel = new VBox(8);
+        legendPanel.setPadding(new Insets(10));
+        legendPanel.setStyle("-fx-background-color: #333333; -fx-border-color: #555555; -fx-border-width: 1;");
+
+        Label legendTitle = new Label("Map Legend");
+        legendTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        // Container for legend items that will be updated
+        VBox legendItems = new VBox(5);
+
+        // Initially populate with crime legend (default)
+        updateLegendItems(legendItems, "Crime");
+
+        legendPanel.getChildren().addAll(legendTitle, new Separator(), legendItems);
+
+        // Store reference to legendItems for updates
+        legendPanel.setUserData(legendItems);
+
+        return legendPanel;
+    }
+
+    /**
+     * Updates the legend items based on the map type
+     * @param legendItems VBox containing legend items
+     * @param mapType The current map type (Crime, Property, or Crime-Property Correlation)
+     */
+    private void updateLegendItems(VBox legendItems, String mapType) {
+        legendItems.getChildren().clear();
+
+        if (mapType.equals("Crime")) {
+            // Create legend items for crime map
+            legendItems.getChildren().addAll(
+                    createLegendItem("High Crime", Color.rgb(220, 50, 50), ">50 incidents/year"),
+                    createLegendItem("Medium-High Crime", Color.rgb(220, 150, 50), "35-50 incidents/year"),
+                    createLegendItem("Medium Crime", Color.rgb(150, 220, 50), "20-35 incidents/year"),
+                    createLegendItem("Low Crime", Color.rgb(50, 50, 220), "<20 incidents/year")
+            );
+        }
+        else if (mapType.equals("Property")) {
+            // Create legend items for property map
+            legendItems.getChildren().addAll(
+                    createLegendItem("High Value", Color.rgb(220, 50, 50), ">$1.5M"),
+                    createLegendItem("Medium-High Value", Color.rgb(220, 150, 50), "$1M-$1.5M"),
+                    createLegendItem("Medium Value", Color.rgb(50, 220, 50), "$500K-$1M"),
+                    createLegendItem("Low Value", Color.rgb(50, 50, 220), "<$500K")
+            );
+        }
+        else if (mapType.equals("Crime-Property Correlation")) {
+            // Create legend items for correlation map
+            legendItems.getChildren().addAll(
+                    createLegendItem("Strong Positive", Color.rgb(0, 255, 0), "High property value, low crime"),
+                    createLegendItem("Moderate Positive", Color.rgb(100, 255, 100), "Above avg. property, below avg. crime"),
+                    createLegendItem("Neutral", Color.rgb(150, 150, 150), "No strong correlation"),
+                    createLegendItem("Moderate Negative", Color.rgb(255, 100, 0), "Below avg. property, above avg. crime"),
+                    createLegendItem("Strong Negative", Color.rgb(255, 0, 0), "Low property value, high crime")
+            );
+        }
+    }
+
+    /**
+     * Creates a single legend item with color box and description
+     * @param label Text label for the legend item
+     * @param color Color for the legend item box
+     * @param description Optional description text
+     * @return HBox containing the legend item
+     */
+    private HBox createLegendItem(String label, Color color, String description) {
+        HBox item = new HBox(10);
+        item.setAlignment(Pos.CENTER_LEFT);
+
+        // Create color box
+        Rectangle colorBox = new Rectangle(15, 15);
+        colorBox.setFill(color);
+        colorBox.setStroke(Color.WHITE);
+        colorBox.setStrokeWidth(0.5);
+
+        // Create VBox for label and description
+        VBox textBox = new VBox(2);
+        Label itemLabel = new Label(label);
+        itemLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12px;");
+
+        textBox.getChildren().add(itemLabel);
+
+        // Add description if provided
+        if (description != null && !description.isEmpty()) {
+            Label descLabel = new Label(description);
+            descLabel.setStyle("-fx-text-fill: #BBBBBB; -fx-font-size: 10px;");
+            textBox.getChildren().add(descLabel);
+        }
+
+        item.getChildren().addAll(colorBox, textBox);
+        return item;
     }
 }
