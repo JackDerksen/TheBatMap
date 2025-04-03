@@ -131,6 +131,137 @@ public class DrawOverlay {
         return new String[]{"None"};
     }
 
+    /**
+     * Generates and saves a correlation heatmap overlay showing relationship
+     * between crime rates and property values
+     * @return Path to the generated image file, or null if generation failed
+     */
+    public String drawCorrelationImage() {
+        Map<String, Double> correlationValues = new HashMap<>();
+
+        // Calculate correlation values for each pixel
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                String key = x + "," + y;
+
+                // Get property value and crime count for this pixel
+                double propertyValue = pixels.getPropertyIntensity(x, y);
+                double crimeIntensity = pixels.getCrimeIntensity(x, y);
+
+                // Skip pixels with no data
+                if (propertyValue == 0.0 && crimeIntensity == 0.0) {
+                    continue;
+                }
+
+                // Calculate correlation:
+                // 1 = high property, low crime (blue)
+                // 0 = balanced (green)
+                // -1 = low property, high crime (red)
+                double correlation = propertyValue - crimeIntensity;
+
+                // Only store pixels with significant data
+                if (Math.abs(correlation) > 0.05) {
+                    correlationValues.put(key, correlation);
+                }
+            }
+        }
+
+        if (!correlationValues.isEmpty()) {
+            // Create a fresh image
+            Graphics2D g2d = img.createGraphics();
+
+            // Clear the image completely
+            g2d.setComposite(AlphaComposite.Clear);
+            g2d.fillRect(0, 0, width, height);
+            g2d.setComposite(AlphaComposite.SrcOver);
+
+            // Draw each data point with color based on correlation value
+            for (Map.Entry<String, Double> entry : correlationValues.entrySet()) {
+                Color color = getCorrelationColor(entry.getValue());
+                g2d.setColor(color);
+
+                String[] coordinate = entry.getKey().split(",");
+                int x = Integer.parseInt(coordinate[0]);
+                int y = Integer.parseInt(coordinate[1]);
+                g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
+            }
+
+            g2d.dispose();
+
+            // Save the image
+            String fileName = "correlation_" + System.currentTimeMillis() + ".png";
+            String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
+
+            // Ensure directory exists
+            File directory = new File(outputDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            File outputFile = new File(outputDir + fileName);
+
+            try {
+                // Write using PNG format which supports transparency
+                ImageIO.write(img, "png", outputFile);
+                System.out.println("Correlation image created at " + outputFile.getAbsolutePath());
+                return outputFile.getAbsolutePath();
+            } catch (IOException e) {
+                System.err.println("Error creating correlation image: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            System.out.println("No correlation data available");
+            return null;
+        }
+    }
+
+    /**
+     * Gets a color representing the correlation value
+     * @param value Correlation value from -1 to 1
+     * @return Color representing the correlation
+     */
+    private Color getCorrelationColor(double value) {
+        int r, g, b;
+
+        // Positive correlation (high property value, low crime) = blue
+        // Negative correlation (low property value, high crime) = red
+        // Values near zero = green
+
+        /*
+        if (value > 0) {
+            // Positive correlation (0 to 1): Green to Blue
+            double ratio = Math.min(1.0, value);
+            r = 0;
+            g = (int)(255 * (1 - ratio));
+            b = (int)(255 * ratio);
+        } else {
+            // Negative correlation (-1 to 0): Red to Green
+            double ratio = Math.min(1.0, -value);
+            r = (int)(255 * ratio);
+            g = (int)(255 * (1 - ratio));
+            b = 0;
+        }
+        */
+
+        if (value > 0) {
+            // Positive correlation (0 to 1): Green to Blue
+            double ratio = Math.min(1.0, value);
+            r = 0;
+            g = (int)(255 * ratio);
+            b = (int)(255 * (1 - ratio));
+        } else {
+            // Negative correlation (-1 to 0): Red to Green
+            double ratio = Math.min(1.0, -value);
+            r = (int)(255 * ratio);
+            g = (int)(255 * (1 - ratio));
+            b = 0;
+        }
+
+        // Add some alpha transparency (80% opaque)
+        return new Color(r, g, b, 204);
+    }
+
     public void setAll(String mapType, String categoryOrGroup, String filter, String assessment) {
     //TODO Crime overlay generation
         /*

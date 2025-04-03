@@ -158,14 +158,25 @@ public class BatMapApplication {
 
         mapTypeButtons.getChildren().addAll(crimeButton, propertyButton);
 
+        // Add correlation button
+        Button correlationButton = new Button("Crime-Property Correlation");
+        correlationButton.setPrefWidth(190);
+        correlationButton.setStyle("-fx-background-color: #6200EA; -fx-text-fill: white;");
+        Tooltip correlationTooltip = new Tooltip("Show relationship between crime rates and property values");
+        Tooltip.install(correlationButton, correlationTooltip);
+
         // Style selected button
         String selectedStyle = "-fx-background-color: #4CAF50; -fx-text-fill: white;";
         String unselectedStyle = "-fx-background-color: #555555; -fx-text-fill: white;";
+        String correlationStyle = "-fx-background-color: #6200EA; -fx-text-fill: white;";
+        String correlationSelectedStyle = "-fx-background-color: #3700B3; -fx-text-fill: white;";
+        String disabledStyle = "-fx-background-color: #888888; -fx-text-fill: #CCCCCC;";
 
         // Initial state
         crimeButton.setStyle(selectedStyle);
         propertyButton.setStyle(unselectedStyle);
         String currentMapType = "Crime"; // Default selection
+        final boolean[] correlationMode = {false}; // Using array as a mutable container
 
         Label categoryOrGroupLabel = new Label("Filter Group");
         categoryOrGroupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
@@ -192,42 +203,38 @@ public class BatMapApplication {
         assessmentComboBox.setPrefWidth(180);
         assessmentComboBox.getSelectionModel().selectFirst();
 
-        // Default selections - do this after populating all ComboBoxes
-        Platform.runLater(() -> {
-            // For category/group ComboBox
-            if (categoryOrGroupComboBox.getItems().contains("None")) {
-                categoryOrGroupComboBox.setValue("None");
-            } else {
-                categoryOrGroupComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Update filter options based on the selected category/group
-            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
-            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
-
-            // For filter ComboBox
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
-
-            // For assessment ComboBox
-            if (assessmentComboBox.getItems().contains("None")) {
-                assessmentComboBox.setValue("None");
-            } else {
-                assessmentComboBox.getSelectionModel().selectFirst();
-            }
-        });
+        // Default selections to "None" where applicable
+        if (categoryOrGroupComboBox.getItems().contains("None")) {
+            categoryOrGroupComboBox.setValue("None");
+        }
+        if (filterComboBox.getItems().contains("None")) {
+            filterComboBox.setValue("None");
+        }
+        if (assessmentComboBox.getItems().contains("None")) {
+            assessmentComboBox.setValue("None");
+        }
 
         // Hide assessment class for Crime mode
         assessmentClassLabel.setVisible(currentMapType.equals("Property"));
         assessmentComboBox.setVisible(currentMapType.equals("Property"));
 
+        // Add button event handlers
         crimeButton.setOnAction(e -> {
+            if (correlationMode[0]) {
+                // Exit correlation mode
+                correlationMode[0] = false;
+                correlationButton.setStyle(correlationStyle);
+            }
+
             crimeButton.setStyle(selectedStyle);
             propertyButton.setStyle(unselectedStyle);
             String mapType = "Crime";
+
+            // Enable filter controls
+            categoryOrGroupLabel.setDisable(false);
+            categoryOrGroupComboBox.setDisable(false);
+            filterLabel.setDisable(false);
+            filterComboBox.setDisable(false);
 
             // Update ComboBoxes
             categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
@@ -239,7 +246,7 @@ public class BatMapApplication {
                 categoryOrGroupComboBox.getSelectionModel().selectFirst();
             }
 
-            // Update filter options based on selected category
+            // Update filter items based on selected category
             String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
             filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
 
@@ -249,7 +256,6 @@ public class BatMapApplication {
                 filterComboBox.getSelectionModel().selectFirst();
             }
 
-            // Reset assessment class dropdown
             assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
             if (assessmentComboBox.getItems().contains("None")) {
                 assessmentComboBox.setValue("None");
@@ -262,25 +268,25 @@ public class BatMapApplication {
             assessmentComboBox.setVisible(false);
         });
 
-        categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
-            filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
-
-            // Make sure "None" is selected if available
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
-        });
-
         propertyButton.setOnAction(e -> {
+            if (correlationMode[0]) {
+                // Exit correlation mode
+                correlationMode[0] = false;
+                correlationButton.setStyle(correlationStyle);
+            }
+
             propertyButton.setStyle(selectedStyle);
             crimeButton.setStyle(unselectedStyle);
             String mapType = "Property";
 
+            // Enable filter controls
+            categoryOrGroupLabel.setDisable(false);
+            categoryOrGroupComboBox.setDisable(false);
+            filterLabel.setDisable(false);
+            filterComboBox.setDisable(false);
+
             // Update ComboBoxes
             categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
-            categoryOrGroupComboBox.getSelectionModel().selectFirst();
 
             // Make sure "None" is selected if available
             if (categoryOrGroupComboBox.getItems().contains("None")) {
@@ -289,12 +295,83 @@ public class BatMapApplication {
                 categoryOrGroupComboBox.getSelectionModel().selectFirst();
             }
 
+            // Update filter items based on selected category
+            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
+            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
+
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
+
             assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
-            assessmentComboBox.getSelectionModel().selectFirst();
+            if (assessmentComboBox.getItems().contains("None")) {
+                assessmentComboBox.setValue("None");
+            } else {
+                assessmentComboBox.getSelectionModel().selectFirst();
+            }
 
             // Show/hide assessment class based on map type
             assessmentClassLabel.setVisible(true);
             assessmentComboBox.setVisible(true);
+        });
+
+        // Add correlation button event handler
+        correlationButton.setOnAction(e -> {
+            correlationMode[0] = !correlationMode[0];
+
+            if (correlationMode[0]) {
+                // Enter correlation mode
+                correlationButton.setStyle(correlationSelectedStyle);
+                crimeButton.setStyle(disabledStyle);
+                propertyButton.setStyle(disabledStyle);
+
+                // Disable filter controls
+                categoryOrGroupLabel.setDisable(true);
+                categoryOrGroupComboBox.setDisable(true);
+                filterLabel.setDisable(true);
+                filterComboBox.setDisable(true);
+                assessmentClassLabel.setDisable(true);
+                assessmentComboBox.setDisable(true);
+
+                // Generate correlation overlay immediately
+                String imagePath = overlay.drawCorrelationImage();
+                displayOverlay(imagePath);
+            } else {
+                // Exit correlation mode
+                correlationButton.setStyle(correlationStyle);
+
+                // Restore previous selection
+                if (currentMapType.equals("Crime")) {
+                    crimeButton.setStyle(selectedStyle);
+                    propertyButton.setStyle(unselectedStyle);
+                    assessmentClassLabel.setVisible(false);
+                    assessmentComboBox.setVisible(false);
+                } else {
+                    propertyButton.setStyle(selectedStyle);
+                    crimeButton.setStyle(unselectedStyle);
+                    assessmentClassLabel.setVisible(true);
+                    assessmentComboBox.setVisible(true);
+                }
+
+                // Re-enable filter controls
+                categoryOrGroupLabel.setDisable(false);
+                categoryOrGroupComboBox.setDisable(false);
+                filterLabel.setDisable(false);
+                filterComboBox.setDisable(false);
+                assessmentClassLabel.setDisable(false);
+                assessmentComboBox.setDisable(false);
+
+                // Clear overlay
+                try {
+                    StackPane mapContainer = (StackPane) mapView.getParent();
+                    mapContainer.getChildren().removeIf(node ->
+                            node != mapView && node instanceof ImageView);
+                } catch (Exception ex) {
+                    System.err.println("Error clearing overlay: " + ex.getMessage());
+                }
+            }
         });
 
         // Create buttons for additional actions
@@ -308,30 +385,54 @@ public class BatMapApplication {
         // Add event handlers for the other controls
         categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
             filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
-            filterComboBox.getSelectionModel().selectFirst();
+
+            // Make sure "None" is selected if available
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
         });
 
         applyFilterButton.setOnAction(e -> {
-            // Determine which map type is selected
-            String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
+            if (correlationMode[0]) {
+                // In correlation mode, just regenerate correlation overlay
+                String imagePath = overlay.drawCorrelationImage();
+                displayOverlay(imagePath);
+            } else {
+                // Determine which map type is selected
+                String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
 
-            overlay.setMapType(mapType);
-            overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
-            overlay.setFilter(filterComboBox.getValue());
-            overlay.setAssessment(assessmentComboBox.getValue());
+                overlay.setMapType(mapType);
+                overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
+                overlay.setFilter(filterComboBox.getValue());
+                overlay.setAssessment(assessmentComboBox.getValue());
 
-            // Add the heat map image
-            String imagePath = overlay.drawImage();
-            displayOverlay(imagePath);
+                // Add the heat map image
+                String imagePath = overlay.drawImage();
+                displayOverlay(imagePath);
+            }
         });
 
         // Reset Button functionality
         resetButton.setOnAction(e -> {
+            // Exit correlation mode if active
+            correlationMode[0] = false;
+            correlationButton.setStyle(correlationStyle);
+
             // Reset button selection (Crime as default)
             crimeButton.setStyle(selectedStyle);
             propertyButton.setStyle(unselectedStyle);
 
-            // Reset all combo box selections
+            // Enable filter controls
+            categoryOrGroupLabel.setDisable(false);
+            categoryOrGroupComboBox.setDisable(false);
+            filterLabel.setDisable(false);
+            filterComboBox.setDisable(false);
+            assessmentClassLabel.setDisable(false);
+            assessmentComboBox.setDisable(false);
+
+            // Reset all combo box selections to the first item
             categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup("Crime")));
 
             // Make sure "None" is selected if available
@@ -392,6 +493,8 @@ public class BatMapApplication {
                 new Separator(),
                 mapTypeLabel,
                 mapTypeButtons,
+                correlationButton,
+                new Separator(),
                 categoryOrGroupLabel,
                 categoryOrGroupComboBox,
                 filterLabel,
