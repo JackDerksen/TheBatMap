@@ -11,4 +11,8 @@ module ca.macewan.thebatmap {
     opens ca.macewan.thebatmap.app to javafx.fxml;
     exports ca.macewan.thebatmap.app.controllers;
     opens ca.macewan.thebatmap.app.controllers to javafx.fxml;
+
+    exports ca.macewan.thebatmap.utils.general;
+    exports ca.macewan.thebatmap.utils.models;
+    exports ca.macewan.thebatmap.utils.parsers;
 }

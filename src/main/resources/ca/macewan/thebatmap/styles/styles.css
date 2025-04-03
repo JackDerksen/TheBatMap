@@ -27,3 +27,13 @@
     -fx-font-weight: bold;
     -fx-padding: 10px 0 5px 0;
 }
+
+.map-type-button {
+    -fx-background-radius: 5;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.map-type-button:hover {
+    -fx-opacity: 0.9;
+}

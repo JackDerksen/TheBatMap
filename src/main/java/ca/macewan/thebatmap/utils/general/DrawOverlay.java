@@ -21,6 +21,7 @@ public class DrawOverlay {
     private final String[] mapTypeArray = new String[]{"Crime", "Property"};
     private final String[] crimeCategoryArray = new String[]{"Category", "Group", "Type", "None"};
     private final String[] propertyCategoryArray = new String[]{"Ward", "Neighbourhood", "None"};
+    private Map<String, String> titleCaseToOriginalMap = new HashMap<>();
 
     public DrawOverlay() {
         try { pixels.loadData(); }
@@ -38,30 +39,231 @@ public class DrawOverlay {
     public String[] getMapTypeArray() { return mapTypeArray; }
 
     public String[] getCategoryOrGroup(String newValue) {
-        if (newValue.equals("Crime")) { return crimeCategoryArray; }
-        else { return propertyCategoryArray; }
+        if (newValue.equals("Crime")) {
+            return crimeCategoryArray;
+        } else {
+            // Add "None" as the first option in the property category array
+            String[] result = new String[propertyCategoryArray.length + 1];
+            result[0] = "None";
+            System.arraycopy(propertyCategoryArray, 0, result, 1, propertyCategoryArray.length);
+            return result;
+        }
     }
 
     public String[] getFilters(String newValue) {
-        Set<String> filterArray = new LinkedHashSet<>();
+        Set<String> filterSet = new LinkedHashSet<>();
+        titleCaseToOriginalMap.clear(); // Clear previous mappings
+
+        // Populate the filter set based on the selected category/group
         switch (newValue) {
-            case "Category" -> filterArray = pixels.getCrimeCategories();
-            case "Group" -> filterArray = pixels.getCrimeGroups();
-            case "Type" -> filterArray = pixels.getCrimeTypes();
-            case "Ward" -> filterArray = pixels.getWards();
-            case "Neighbourhood" -> filterArray = pixels.getNeighborhoods();
-            case null, default -> filterArray.add("None");
+            case "Category" -> filterSet = pixels.getCrimeCategories();
+            case "Group" -> filterSet = pixels.getCrimeGroups();
+            case "Type" -> filterSet = pixels.getCrimeTypes();
+            case "Ward" -> filterSet = pixels.getWards();
+            case "Neighbourhood" -> filterSet = pixels.getNeighborhoods();
+            case null, default -> filterSet.add("None");
         }
-        return filterArray.toArray(new String[0]);
+
+        // Create the final list with "None" at top
+        List<String> result = new ArrayList<>();
+
+        // Always add "None" at the top
+        boolean hasNone = filterSet.remove("None");
+        result.add("None"); // Always include None at the top
+
+        // Check for "Other" to add at the end
+        boolean hasOther = filterSet.remove("Other");
+
+        // Add remaining items in alphabetical order
+        List<String> sortedItems = new ArrayList<>(filterSet);
+        Collections.sort(sortedItems);
+
+        // Apply title case to each item and map to original
+        for (String item : sortedItems) {
+            if (item.equals("None") || item.equals("Other")) {
+                result.add(item);
+            } else {
+                String titleCased = toTitleCase(item);
+                result.add(titleCased);
+                // Store mapping from title case to original
+                titleCaseToOriginalMap.put(titleCased, item);
+            }
+        }
+
+        // Add "Other" at the end if it existed
+        if (hasOther) {
+            result.add("Other");
+        }
+
+        return result.toArray(new String[0]);
     }
 
     public String[] getAssessmentClass(String newValue) {
         if (newValue.equals("Property")) {
             Set<String> assessmentClasses = pixels.getAssessmentClasses();
-            assessmentClasses.add("None");
-            return assessmentClasses.toArray(new String[0]);
+
+            // Special handling for Other
+            boolean hasOther = assessmentClasses.remove("Other");
+
+            // Convert to list for sorting
+            List<String> sortedList = new ArrayList<>(assessmentClasses);
+            Collections.sort(sortedList);
+
+            // Create final list with special values in special positions
+            List<String> finalList = new ArrayList<>();
+            finalList.add("None"); // Always have None at the top
+
+            // Apply title case to each entry and map to original
+            for (String item : sortedList) {
+                // Keep "None" and "Other" as is
+                if (item.equals("None") || item.equals("Other")) {
+                    finalList.add(item);
+                } else {
+                    String titleCased = toTitleCase(item);
+                    finalList.add(titleCased);
+                    // Store mapping from title case to original
+                    titleCaseToOriginalMap.put(titleCased, item);
+                }
+            }
+
+            if (hasOther) {
+                finalList.add("Other");
+            }
+
+            return finalList.toArray(new String[0]);
         }
         return new String[]{"None"};
+    }
+
+    /**
+     * Generates and saves a correlation heatmap overlay showing relationship
+     * between crime rates and property values
+     * @return Path to the generated image file, or null if generation failed
+     */
+    public String drawCorrelationImage() {
+        Map<String, Double> correlationValues = new HashMap<>();
+
+        // Calculate correlation values for each pixel
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                String key = x + "," + y;
+
+                // Get property value and crime count for this pixel
+                double propertyValue = pixels.getPropertyIntensity(x, y);
+                double crimeIntensity = pixels.getCrimeIntensity(x, y);
+
+                // Skip pixels with no data
+                if (propertyValue == 0.0 && crimeIntensity == 0.0) {
+                    continue;
+                }
+
+                // Calculate correlation:
+                // 1 = high property, low crime (blue)
+                // 0 = balanced (green)
+                // -1 = low property, high crime (red)
+                double correlation = propertyValue - crimeIntensity;
+
+                // Only store pixels with significant data
+                if (Math.abs(correlation) > 0.05) {
+                    correlationValues.put(key, correlation);
+                }
+            }
+        }
+
+        if (!correlationValues.isEmpty()) {
+            // Create a fresh image
+            Graphics2D g2d = img.createGraphics();
+
+            // Clear the image completely
+            g2d.setComposite(AlphaComposite.Clear);
+            g2d.fillRect(0, 0, width, height);
+            g2d.setComposite(AlphaComposite.SrcOver);
+
+            // Draw each data point with color based on correlation value
+            for (Map.Entry<String, Double> entry : correlationValues.entrySet()) {
+                Color color = getCorrelationColor(entry.getValue());
+                g2d.setColor(color);
+
+                String[] coordinate = entry.getKey().split(",");
+                int x = Integer.parseInt(coordinate[0]);
+                int y = Integer.parseInt(coordinate[1]);
+                g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
+            }
+
+            g2d.dispose();
+
+            // Save the image
+            String fileName = "correlation_" + System.currentTimeMillis() + ".png";
+            String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
+
+            // Ensure directory exists
+            File directory = new File(outputDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            File outputFile = new File(outputDir + fileName);
+
+            try {
+                // Write using PNG format which supports transparency
+                ImageIO.write(img, "png", outputFile);
+                System.out.println("Correlation image created at " + outputFile.getAbsolutePath());
+                return outputFile.getAbsolutePath();
+            } catch (IOException e) {
+                System.err.println("Error creating correlation image: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            System.out.println("No correlation data available");
+            return null;
+        }
+    }
+
+    /**
+     * Gets a color representing the correlation value
+     * @param value Correlation value from -1 to 1
+     * @return Color representing the correlation
+     */
+    private Color getCorrelationColor(double value) {
+        int r, g, b;
+
+        // Positive correlation (high property value, low crime) = blue
+        // Negative correlation (low property value, high crime) = red
+        // Values near zero = green
+
+        /*
+        if (value > 0) {
+            // Positive correlation (0 to 1): Green to Blue
+            double ratio = Math.min(1.0, value);
+            r = 0;
+            g = (int)(255 * (1 - ratio));
+            b = (int)(255 * ratio);
+        } else {
+            // Negative correlation (-1 to 0): Red to Green
+            double ratio = Math.min(1.0, -value);
+            r = (int)(255 * ratio);
+            g = (int)(255 * (1 - ratio));
+            b = 0;
+        }
+        */
+
+        if (value > 0) {
+            // Positive correlation (0 to 1): Green to Blue
+            double ratio = Math.min(1.0, value);
+            r = 0;
+            g = (int)(255 * ratio);
+            b = (int)(255 * (1 - ratio));
+        } else {
+            // Negative correlation (-1 to 0): Red to Green
+            double ratio = Math.min(1.0, -value);
+            r = (int)(255 * ratio);
+            g = (int)(255 * (1 - ratio));
+            b = 0;
+        }
+
+        // Add some alpha transparency (80% opaque)
+        return new Color(r, g, b, 204);
     }
 
     public void setAll(String mapType, String categoryOrGroup, String filter, String assessment) {
@@ -157,20 +359,51 @@ public class DrawOverlay {
      * @return Path to the generated image file, or null if generation failed
      */
     public String drawImage() {
-        Map<String, Double> pixelValues = getPixelValues();
+        // Convert title case filter back to original if needed
+        String originalFilter = titleCaseToOriginalMap.getOrDefault(filter, filter);
+        String originalAssessment = titleCaseToOriginalMap.getOrDefault(assessment, assessment);
+
+        System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter);
+        System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment);
+
+        // Temporarily store the original assessment
+        String tempAssessment = assessment;
+
+        // Replace the assessment with original version for filtering
+        assessment = originalAssessment;
+
+        Map<String, Double> pixelValues = getPixelValues(originalFilter);
+
+        // Restore the display version
+        assessment = tempAssessment;
+
+        // Handle both cases: data exists or no data
+        Graphics2D g2d = img.createGraphics();
+
+        // Clear the image completely
+        g2d.setComposite(AlphaComposite.Clear);
+        g2d.fillRect(0, 0, width, height);
+        g2d.setComposite(AlphaComposite.SrcOver);
+
+        String safeFilter = filter.replace('/', '_').replace('\\', '_')
+                .replace(':', '_').replace('*', '_')
+                .replace('?', '_').replace('"', '_')
+                .replace('<', '_').replace('>', '_')
+                .replace('|', '_');
+
+        String fileName = mapType + "_" + categoryOrGroup + "_" + safeFilter + "_" + assessment + ".png";
+        String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
+
+        // Ensure directory exists
+        File directory = new File(outputDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
 
         if (!pixelValues.isEmpty()) {
+            // Draw data points when we have matching data
             Map<String, Color> gradientMap = gradientMap(pixelValues);
 
-            // Create a fresh image
-            Graphics2D g2d = img.createGraphics();
-
-            // Clear the image completely
-            g2d.setComposite(AlphaComposite.Clear);
-            g2d.fillRect(0, 0, width, height);
-            g2d.setComposite(AlphaComposite.SrcOver);
-
-            // Only draw the colored dots, leaving the rest transparent
             for (Map.Entry<String, Color> current : gradientMap.entrySet()) {
                 g2d.setColor(current.getValue());
                 String[] coordinate = current.getKey().split(",");
@@ -178,47 +411,31 @@ public class DrawOverlay {
                 int y = Integer.parseInt(coordinate[1]);
                 g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
             }
-
-            g2d.dispose();
-
-            //TODO Remember to remove this
-            // Safe filename cause shit won't find the image so just force every extension check
-            String safeFilter = filter.replace('/', '_').replace('\\', '_')
-                    .replace(':', '_').replace('*', '_')
-                    .replace('?', '_').replace('"', '_')
-                    .replace('<', '_').replace('>', '_')
-                    .replace('|', '_');
-
-            String fileName = mapType + "_" + categoryOrGroup + "_" + safeFilter + "_" + assessment + ".png";
-            String outputDir = GenerateKeyCSV.getOutputDir();
-
-            // Ensure directory exists
-            File directory = new File(outputDir);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-
-            File outputFile = new File(outputDir + fileName);
-
-            try {
-                // Write using PNG format which supports transparency
-                ImageIO.write(img, "png", outputFile);
-                System.out.println("Image created at " + outputFile.getAbsolutePath());
-
-                return outputFile.getAbsolutePath();
-            } catch (IOException e) {
-                System.err.println("Error creating image: " + e.getMessage());
-                e.printStackTrace();
-                return null;
-            }
         } else {
-            System.out.println("Empty: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
+            // Create a simple message for "no data" case
+            System.out.println("No data matches filter: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
+
+            // We'll keep the image completely transparent and just create a blank overlay
+            fileName = "no_data_" + System.currentTimeMillis() + ".png";
+        }
+
+        g2d.dispose();
+
+        File outputFile = new File(outputDir + fileName);
+
+        try {
+            // Write using PNG format which supports transparency
+            ImageIO.write(img, "png", outputFile);
+            System.out.println("Image created at " + outputFile.getAbsolutePath());
+            return outputFile.getAbsolutePath();
+        } catch (IOException e) {
+            System.err.println("Error creating image: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
 
-
-    private Map<String, Double> getPixelValues() {
+    private Map<String, Double> getPixelValues(String filterValue) {
         Map<String, Double> pixelValues = new HashMap<>();
         double count;
 
@@ -227,35 +444,57 @@ public class DrawOverlay {
                 CalculatePixelValue.CrimePixelData crimeData = entry.getValue();
 
                 count = switch (categoryOrGroup) {
-                    case "Category" -> crimeData.getCategoryCount(filter);
-                    case "Group" -> crimeData.getGroupCount(filter);
-                    case "Type" -> crimeData.getGroupTypeCount(filter);
+                    case "Category" -> crimeData.getCategoryCount(filterValue);
+                    case "Group" -> crimeData.getGroupCount(filterValue);
+                    case "Type" -> crimeData.getGroupTypeCount(filterValue);
                     default -> crimeData.getCount();
                 };
                 if (count > 0) pixelValues.put(entry.getKey(), count);
             }
         }
-        else { // mapType.equals("property")
+        else { // mapType.equals("Property")
             for (Map.Entry<String, CalculatePixelValue.PropertyPixelData> entry : pixels.getPropertyPixels().entrySet()) {
                 CalculatePixelValue.PropertyPixelData propertyValues = entry.getValue();
 
                 Map<String, Integer> propertyMap = null;
                 Map<String, Integer> assessmentMap = null;
 
+                // If category/group is "None", we don't filter by it
                 if (!categoryOrGroup.equals("None")) {
-                    if (categoryOrGroup.equals("Ward")) { propertyMap = propertyValues.getWardCount(); }
-                    else { propertyMap = propertyValues.getNeighborhoodCount(); }
+                    if (categoryOrGroup.equals("Ward")) {
+                        propertyMap = propertyValues.getWardCount();
+                    }
+                    else if (categoryOrGroup.equals("Neighbourhood")) {
+                        propertyMap = propertyValues.getNeighborhoodCount();
+                    }
                 }
 
-                if (!assessment.equals("None")) { assessmentMap = propertyValues.getAssessmentClassCount(); }
+                if (!assessment.equals("None")) {
+                    assessmentMap = propertyValues.getAssessmentClassCount();
+                }
 
-                if ((propertyMap == null || propertyMap.containsKey(filter)) &&
-                        (assessmentMap == null || assessmentMap.containsKey(assessment))) {
+                // When category/group is "None", we don't check propertyMap
+                // When filter is "None", we don't check for a specific key
+                boolean includeProperty = true;
+
+                if (propertyMap != null && !filterValue.equals("None")) {
+                    includeProperty = propertyMap.containsKey(filterValue);
+                }
+
+                if (assessmentMap != null && !assessment.equals("None")) {
+                    includeProperty = includeProperty && assessmentMap.containsKey(assessment);
+                }
+
+                if (includeProperty) {
                     count = propertyValues.getAverageValue();
                     pixelValues.put(entry.getKey(), count);
                 }
             }
         }
+
+        System.out.println("Found " + pixelValues.size() + " matching properties for filter: " +
+                mapType + "/" + categoryOrGroup + "/" + filterValue + "/" + assessment);
+
         return pixelValues;
     }
 
@@ -326,5 +565,28 @@ public class DrawOverlay {
     private static double getPercentile(List<Double> sortedData, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * sortedData.size()) - 1;
         return sortedData.get(index);
+    }
+
+    private String toTitleCase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        StringBuilder titleCase = new StringBuilder(input.length());
+        boolean nextTitleCase = true;
+
+        for (char c : input.toCharArray()) {
+            if (Character.isSpaceChar(c) || c == '-' || c == '/') {
+                nextTitleCase = true;
+                titleCase.append(c);
+            } else if (nextTitleCase) {
+                titleCase.append(Character.toTitleCase(c));
+                nextTitleCase = false;
+            } else {
+                titleCase.append(Character.toLowerCase(c));
+            }
+        }
+
+        return titleCase.toString();
     }
 }
