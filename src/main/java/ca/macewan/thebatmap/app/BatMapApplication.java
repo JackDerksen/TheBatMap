@@ -1,6 +1,7 @@
 package ca.macewan.thebatmap.app;
 
 import ca.macewan.thebatmap.utils.general.DrawOverlay;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -143,9 +144,28 @@ public class BatMapApplication {
         Label panelTitle = new Label("Control Panel");
         panelTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-        // Create a label for the filter
+        // Create map type selection buttons
         Label mapTypeLabel = new Label("Map Type");
         mapTypeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        HBox mapTypeButtons = new HBox(10);
+        Button crimeButton = new Button("Crime");
+        Button propertyButton = new Button("Property");
+
+        // Set equal widths for buttons
+        crimeButton.setPrefWidth(90);
+        propertyButton.setPrefWidth(90);
+
+        mapTypeButtons.getChildren().addAll(crimeButton, propertyButton);
+
+        // Style selected button
+        String selectedStyle = "-fx-background-color: #4CAF50; -fx-text-fill: white;";
+        String unselectedStyle = "-fx-background-color: #555555; -fx-text-fill: white;";
+
+        // Initial state
+        crimeButton.setStyle(selectedStyle);
+        propertyButton.setStyle(unselectedStyle);
+        String currentMapType = "Crime"; // Default selection
 
         Label categoryOrGroupLabel = new Label("Filter Group");
         categoryOrGroupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
@@ -156,12 +176,8 @@ public class BatMapApplication {
         Label assessmentClassLabel = new Label("Assessment Class");
         assessmentClassLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-        String[] mapTypeArray = overlay.getMapTypeArray();
-        ComboBox<String> mapTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(mapTypeArray));
-        mapTypeComboBox.setPrefWidth(180);
-        mapTypeComboBox.getSelectionModel().selectFirst();
-
-        String[] categoryOrGroup = overlay.getCategoryOrGroup(mapTypeComboBox.getValue());
+        // Set up ComboBoxes
+        String[] categoryOrGroup = overlay.getCategoryOrGroup(currentMapType);
         ComboBox<String> categoryOrGroupComboBox = new ComboBox<>(FXCollections.observableArrayList(categoryOrGroup));
         categoryOrGroupComboBox.setPrefWidth(180);
         categoryOrGroupComboBox.getSelectionModel().selectFirst();
@@ -171,10 +187,115 @@ public class BatMapApplication {
         filterComboBox.setPrefWidth(180);
         filterComboBox.getSelectionModel().selectFirst();
 
-        String[] assessmentClass = overlay.getAssessmentClass(mapTypeComboBox.getValue());
+        String[] assessmentClass = overlay.getAssessmentClass(currentMapType);
         ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
         assessmentComboBox.setPrefWidth(180);
         assessmentComboBox.getSelectionModel().selectFirst();
+
+        // Default selections - do this after populating all ComboBoxes
+        Platform.runLater(() -> {
+            // For category/group ComboBox
+            if (categoryOrGroupComboBox.getItems().contains("None")) {
+                categoryOrGroupComboBox.setValue("None");
+            } else {
+                categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Update filter options based on the selected category/group
+            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
+            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
+
+            // For filter ComboBox
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
+
+            // For assessment ComboBox
+            if (assessmentComboBox.getItems().contains("None")) {
+                assessmentComboBox.setValue("None");
+            } else {
+                assessmentComboBox.getSelectionModel().selectFirst();
+            }
+        });
+
+        // Hide assessment class for Crime mode
+        assessmentClassLabel.setVisible(currentMapType.equals("Property"));
+        assessmentComboBox.setVisible(currentMapType.equals("Property"));
+
+        crimeButton.setOnAction(e -> {
+            crimeButton.setStyle(selectedStyle);
+            propertyButton.setStyle(unselectedStyle);
+            String mapType = "Crime";
+
+            // Update ComboBoxes
+            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
+
+            // Make sure "None" is selected if available
+            if (categoryOrGroupComboBox.getItems().contains("None")) {
+                categoryOrGroupComboBox.setValue("None");
+            } else {
+                categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Update filter options based on selected category
+            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
+            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
+
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Reset assessment class dropdown
+            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
+            if (assessmentComboBox.getItems().contains("None")) {
+                assessmentComboBox.setValue("None");
+            } else {
+                assessmentComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Show/hide assessment class based on map type
+            assessmentClassLabel.setVisible(false);
+            assessmentComboBox.setVisible(false);
+        });
+
+        categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
+            filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
+
+            // Make sure "None" is selected if available
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
+        });
+
+        propertyButton.setOnAction(e -> {
+            propertyButton.setStyle(selectedStyle);
+            crimeButton.setStyle(unselectedStyle);
+            String mapType = "Property";
+
+            // Update ComboBoxes
+            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
+            categoryOrGroupComboBox.getSelectionModel().selectFirst();
+
+            // Make sure "None" is selected if available
+            if (categoryOrGroupComboBox.getItems().contains("None")) {
+                categoryOrGroupComboBox.setValue("None");
+            } else {
+                categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            }
+
+            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
+            assessmentComboBox.getSelectionModel().selectFirst();
+
+            // Show/hide assessment class based on map type
+            assessmentClassLabel.setVisible(true);
+            assessmentComboBox.setVisible(true);
+        });
 
         // Create buttons for additional actions
         Button applyFilterButton = new Button("Apply Filter");
@@ -184,24 +305,17 @@ public class BatMapApplication {
         HBox buttonContainer = new HBox(10);
         buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
 
-        // Add event handlers
-        mapTypeComboBox.getSelectionModel().selectedItemProperty().addListener((_, _,
-                                                                                newValue) -> {
-            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(newValue)));
-            categoryOrGroupComboBox.getSelectionModel().selectFirst();
-
-            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(newValue)));
-            assessmentComboBox.getSelectionModel().selectFirst();
-        });
-
-        categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _,
-                                                                                newValue) -> {
+        // Add event handlers for the other controls
+        categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
             filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
             filterComboBox.getSelectionModel().selectFirst();
         });
 
         applyFilterButton.setOnAction(e -> {
-            overlay.setMapType(mapTypeComboBox.getValue());
+            // Determine which map type is selected
+            String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
+
+            overlay.setMapType(mapType);
             overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
             overlay.setFilter(filterComboBox.getValue());
             overlay.setAssessment(assessmentComboBox.getValue());
@@ -213,11 +327,41 @@ public class BatMapApplication {
 
         // Reset Button functionality
         resetButton.setOnAction(e -> {
-            // Reset all combo box selections to the first item
-            mapTypeComboBox.getSelectionModel().selectFirst();
-            categoryOrGroupComboBox.getSelectionModel().selectFirst();
-            filterComboBox.getSelectionModel().selectFirst();
-            assessmentComboBox.getSelectionModel().selectFirst();
+            // Reset button selection (Crime as default)
+            crimeButton.setStyle(selectedStyle);
+            propertyButton.setStyle(unselectedStyle);
+
+            // Reset all combo box selections
+            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup("Crime")));
+
+            // Make sure "None" is selected if available
+            if (categoryOrGroupComboBox.getItems().contains("None")) {
+                categoryOrGroupComboBox.setValue("None");
+            } else {
+                categoryOrGroupComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Update filter options based on selected category
+            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
+            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
+
+            if (filterComboBox.getItems().contains("None")) {
+                filterComboBox.setValue("None");
+            } else {
+                filterComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Reset assessment class dropdown
+            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass("Crime")));
+            if (assessmentComboBox.getItems().contains("None")) {
+                assessmentComboBox.setValue("None");
+            } else {
+                assessmentComboBox.getSelectionModel().selectFirst();
+            }
+
+            // Hide assessment controls for Crime mode
+            assessmentClassLabel.setVisible(false);
+            assessmentComboBox.setVisible(false);
 
             // Reset the overlay object's internal state
             overlay.setMapType("");
@@ -243,12 +387,11 @@ public class BatMapApplication {
             System.out.println("Filters reset");
         });
 
-        // Add all components to the VBox
         leftControls.getChildren().addAll(
                 panelTitle,
-                new Separator(), // Add a separator for visual distinction
+                new Separator(),
                 mapTypeLabel,
-                mapTypeComboBox,
+                mapTypeButtons,
                 categoryOrGroupLabel,
                 categoryOrGroupComboBox,
                 filterLabel,
