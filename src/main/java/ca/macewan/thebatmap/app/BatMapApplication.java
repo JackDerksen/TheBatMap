@@ -1,6 +1,5 @@
 package ca.macewan.thebatmap.app;
 
-import ca.macewan.thebatmap.app.controllers.LeftPanelUtils;
 import ca.macewan.thebatmap.utils.general.DrawOverlay;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;

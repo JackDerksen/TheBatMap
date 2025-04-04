@@ -1,4 +1,4 @@
-package ca.macewan.thebatmap.app.controllers;
+package ca.macewan.thebatmap.app;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
