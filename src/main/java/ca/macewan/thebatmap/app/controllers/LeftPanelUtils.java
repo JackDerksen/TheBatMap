@@ -151,6 +151,7 @@ public class LeftPanelUtils {
 
     public void exitCorrelation() {
         correlationButton.setStyle("-fx-background-color: #6200EA; -fx-text-fill: white;");
+        enableButtons();
     }
 
     public void enterCorrelation() {
@@ -160,7 +161,6 @@ public class LeftPanelUtils {
 
     public void buttonClick(String mapType) {
         exitCorrelation();
-        enableButtons();
 
         boolean isProperty = mapType.equals("Property");
         Button unselectButton = isProperty ? crimeButton : propertyButton;
