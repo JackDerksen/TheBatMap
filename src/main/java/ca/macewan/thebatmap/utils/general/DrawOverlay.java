@@ -18,10 +18,9 @@ public class DrawOverlay {
     private String categoryOrGroup = "";
     private String filter = "";
     private String assessment = "";
-    private final String[] mapTypeArray = new String[]{"Crime", "Property"};
     private final String[] crimeCategoryArray = new String[]{"Category", "Group", "Type", "None"};
     private final String[] propertyCategoryArray = new String[]{"Ward", "Neighbourhood", "None"};
-    private Map<String, String> titleCaseToOriginalMap = new HashMap<>();
+    private final Map<String, String> titleCaseToOriginalMap = new HashMap<>();
 
     public DrawOverlay() {
         try { pixels.loadData(); }
@@ -36,16 +35,11 @@ public class DrawOverlay {
 
     public void setAssessment(String assessment) { this.assessment = assessment; }
 
-    public String[] getMapTypeArray() { return mapTypeArray; }
-
     public String[] getCategoryOrGroup(String newValue) {
         if (newValue.equals("Crime")) {
             return crimeCategoryArray;
         } else {
-            // Add "None" as the first option in the property category array
-            String[] result = new String[propertyCategoryArray.length + 1];
-            System.arraycopy(propertyCategoryArray, 0, result, 1, propertyCategoryArray.length);
-            return result;
+            return propertyCategoryArray;
         }
     }
 
@@ -67,7 +61,6 @@ public class DrawOverlay {
         List<String> result = new ArrayList<>();
 
         // Always add "None" at the top
-        boolean hasNone = filterSet.remove("None");
         result.add("None"); // Always include None at the top
 
         // Check for "Other" to add at the end
@@ -230,23 +223,6 @@ public class DrawOverlay {
         // Positive correlation (high property value, low crime) = blue
         // Negative correlation (low property value, high crime) = red
         // Values near zero = green
-
-        /*
-        if (value > 0) {
-            // Positive correlation (0 to 1): Green to Blue
-            double ratio = Math.min(1.0, value);
-            r = 0;
-            g = (int)(255 * (1 - ratio));
-            b = (int)(255 * ratio);
-        } else {
-            // Negative correlation (-1 to 0): Red to Green
-            double ratio = Math.min(1.0, -value);
-            r = (int)(255 * ratio);
-            g = (int)(255 * (1 - ratio));
-            b = 0;
-        }
-        */
-
         if (value > 0) {
             // Positive correlation (0 to 1): Green to Blue
             double ratio = Math.min(1.0, value);
@@ -263,94 +239,6 @@ public class DrawOverlay {
 
         // Add some alpha transparency (80% opaque)
         return new Color(r, g, b, 204);
-    }
-
-    public void setAll(String mapType, String categoryOrGroup, String filter, String assessment) {
-    //TODO Crime overlay generation
-        /*
-        String mapType = "crime";
-
-        String categoryOrGroup = "category";
-        String assessment = "";
-
-        for (String current : pixels.getCrimeCategories()) {
-            drawImage(mapType, categoryOrGroup, current, assessment);
-        }
-
-        categoryOrGroup = "group";
-        for (String current : pixels.getCrimeGroups()) {
-            drawImage(mapType, categoryOrGroup, current, assessment);
-        }
-
-        drawImage(mapType, "", "", assessment);
-        */
-
-        //TODO Property overlay generation
-        /*
-        String mapType = "property";
-
-        String categoryOrGroup = "ward";
-
-        for (String ward : pixels.getWards()) {
-            for (String assessment : pixels.getAssessmentClasses()) {
-                drawImage(mapType, categoryOrGroup, ward, assessment);
-            }
-        }
-
-        categoryOrGroup = "neighbourhood";
-        for (String current : pixels.getNeighborhoods()) {
-            drawImage(mapType, categoryOrGroup, current, assessment);
-        }
-
-        drawImage(mapType, "", "", assessment);
-        */
-
-        /*
-        //TODO Specific overlay generation
-        Scanner input = new Scanner(System.in);
-
-        System.out.println("[crime, property]\nMap type?");
-        mapType = input.nextLine();
-
-        if (mapType.equals("crime")) {
-            System.out.println("[category, group, type]\nCrime specifics? (Enter to skip)");
-            categoryOrGroup = input.nextLine();
-
-            if (!categoryOrGroup.isEmpty()) {
-                if (categoryOrGroup.equals("category")) {
-                    System.out.println(pixels.getCrimeCategories());
-                }
-                else if (categoryOrGroup.equals("group")) {
-                    System.out.println(pixels.getCrimeGroups());
-                }
-                else {
-                    System.out.println(pixels.getCrimeTypes());
-                }
-                System.out.println("Which? (case sensitive)");
-                filter = input.nextLine();
-            }
-        }
-        else { // mapType.equals("property")
-            System.out.println("[ward, neighbourhood]\nWant specific? (Enter to skip)");
-            categoryOrGroup = input.nextLine();
-
-            filter = "";
-            if (!categoryOrGroup.isEmpty()) {
-                if (categoryOrGroup.equals("ward")) {
-                    System.out.println(pixels.getWards());
-                }
-                else {
-                    System.out.println(pixels.getNeighborhoods());
-                }
-                System.out.println("Which? (case sensitive) (Enter to skip)");
-                filter = input.nextLine();
-            }
-
-            System.out.println(pixels.getAssessmentClasses() + "\nWhich assessment class? (case sensitive) (Enter to skip)");
-            assessment = input.nextLine();
-        }
-        drawImage();
-        */
     }
 
     /**

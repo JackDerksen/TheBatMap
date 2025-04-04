@@ -1,18 +1,13 @@
 package ca.macewan.thebatmap.app;
 
 import ca.macewan.thebatmap.utils.general.DrawOverlay;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -39,9 +34,8 @@ public class BatMapApplication {
     /**
      * Initialize and start the application
      * @param primaryStage The primary stage provided by JavaFX
-     * @throws IOException If resources cannot be loaded
      */
-    public void initialize(Stage primaryStage) throws IOException {
+    public void initialize(Stage primaryStage) {
         this.stage = primaryStage;
 
         // Create the UI components
@@ -89,9 +83,8 @@ public class BatMapApplication {
     /**
      * Creates the main content layout
      * @return A configured BorderPane for the content
-     * @throws IOException If the FXML file cannot be loaded
      */
-    private BorderPane createContentLayout() throws IOException {
+    private BorderPane createContentLayout() {
         BorderPane contentLayout = new BorderPane();
 
         // Load the map image
@@ -669,16 +662,13 @@ public class BatMapApplication {
             String currentMapType;
             if (imagePath.contains("correlation")) {
                 currentMapType = "Crime-Property Correlation";
+            } else if (imagePath.toLowerCase().contains("crime")) {
+                currentMapType = "Crime";
+            } else if (imagePath.toLowerCase().contains("property")) {
+                currentMapType = "Property";
             } else {
-
-                if (imagePath.toLowerCase().contains("crime")) {
-                    currentMapType = "Crime";
-                } else if (imagePath.toLowerCase().contains("property")) {
-                    currentMapType = "Property";
-                } else {
-                    // Default case
-                    currentMapType = "Crime"; // Default to Crime if unknown
-                }
+                // Default case
+                currentMapType = "Crime"; // Default to Crime if unknown
             }
 
             // Get pixel reader to detect colors under cursor
@@ -716,9 +706,7 @@ public class BatMapApplication {
                         hoverTooltip.setText(tooltipText);
 
                         // Show tooltip near cursor
-                        hoverTooltip.show(overlayView,
-                                event.getScreenX() + 15,
-                                event.getScreenY() + 15);
+                        hoverTooltip.show(overlayView, event.getScreenX() + 15, event.getScreenY() + 15);
                     } else {
                         // Hide tooltip when over transparent areas
                         hoverTooltip.hide();
@@ -727,7 +715,7 @@ public class BatMapApplication {
             });
 
             // Hide tooltip when mouse exits the overlay
-            overlayView.setOnMouseExited(event -> hoverTooltip.hide());
+            overlayView.setOnMouseExited(_ -> hoverTooltip.hide());
 
             // Add the overlay on top of the map
             mapContainer.getChildren().add(overlayView);
@@ -746,7 +734,7 @@ public class BatMapApplication {
     private void loadStylesheet() {
         try {
             if (getClass().getResource(CSS_FILE_PATH) != null) {
-                scene.getStylesheets().add(getClass().getResource(CSS_FILE_PATH).toExternalForm());
+                scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource(CSS_FILE_PATH)).toExternalForm());
             }
         } catch (Exception e) {
             System.err.println("Failed to load CSS: " + e.getMessage());
