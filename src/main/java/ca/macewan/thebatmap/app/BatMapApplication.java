@@ -1,5 +1,6 @@
 package ca.macewan.thebatmap.app;
 
+import ca.macewan.thebatmap.app.controllers.LeftPanelUtils;
 import ca.macewan.thebatmap.utils.general.DrawOverlay;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -23,13 +24,19 @@ public class BatMapApplication {
     private static final String VIEW_FILE_PATH = "/ca/macewan/thebatmap/views/MainView.fxml";
     private static final String CSS_FILE_PATH = "/ca/macewan/thebatmap/styles/MainStyle.css";
     private static final DrawOverlay overlay = new DrawOverlay();
+    private static final LeftPanelUtils leftPanel = new LeftPanelUtils();
 
     // Application components
     private Stage stage;
     private Scene scene;
     private BorderPane root;
     private ImageView mapView;
-    private ImageView overlayView;
+    private StackPane mapViewParent;
+
+    private final ComboBox<String> categoryOrGroupComboBox = leftPanel.getCategoryOrGroupComboBox();
+    private final ComboBox<String> filterComboBox = leftPanel.getFilterComboBox();
+    private final ComboBox<String> assessmentComboBox = leftPanel.getAssessmentComboBox();
+    private final VBox legendPanel = leftPanel.createLegend();
 
     /**
      * Initialize and start the application
@@ -49,6 +56,8 @@ public class BatMapApplication {
         // Set up the main content
         BorderPane contentLayout = createContentLayout();
         root.setCenter(contentLayout);
+
+        mapViewParent = (StackPane) mapView.getParent();
 
         // Set up the scene
         scene = new Scene(root, WIN_WIDTH, WIN_HEIGHT);
@@ -131,99 +140,44 @@ public class BatMapApplication {
      */
     private VBox CreateLeftPanel() {
         // Create a VBox with spacing between elements
-        VBox leftControls = new VBox(10);
-        leftControls.setPrefWidth(220);
-        leftControls.setPadding(new Insets(10));
-        leftControls.setStyle("-fx-background-color: #333333;");
+        VBox leftControls = leftPanel.getLeftControls();
 
         // Create a title for the panel
-        Label panelTitle = new Label("Control Panel");
-        panelTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        Label panelTitle = leftPanel.getPanelTitle();
 
         // Create map type selection buttons
-        Label mapTypeLabel = new Label("Map Type");
-        mapTypeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
+        Label mapTypeLabel = leftPanel.getMapTypeLabel();
+        Button crimeButton = leftPanel.getCrimeButton();
+        Button propertyButton = leftPanel.getPropertyButton();
 
+        // Create an HBox to hold the buttons side by side
         HBox mapTypeButtons = new HBox(10);
-        Button crimeButton = new Button("Crime");
-        Button propertyButton = new Button("Property");
-
-        // Set equal widths for buttons
-        crimeButton.setPrefWidth(100);
-        propertyButton.setPrefWidth(100);
-
         mapTypeButtons.getChildren().addAll(crimeButton, propertyButton);
 
         // Add correlation button
-        Button correlationButton = new Button("Crime-Property Correlation");
-        correlationButton.setPrefWidth(200);
-        correlationButton.setStyle("-fx-background-color: #6200EA; -fx-text-fill: white;");
-        Tooltip correlationTooltip = new Tooltip("Show relationship between crime rates and property values");
-        Tooltip.install(correlationButton, correlationTooltip);
+        Button correlationButton = leftPanel.getCorrelationButton();
 
-        // Style selected button
-        String selectedStyle = "-fx-background-color: #4CAF50; -fx-text-fill: white;";
-        String unselectedStyle = "-fx-background-color: #555555; -fx-text-fill: white;";
-        String correlationStyle = "-fx-background-color: #6200EA; -fx-text-fill: white;";
-        String correlationSelectedStyle = "-fx-background-color: #3700B3; -fx-text-fill: white;";
-        String disabledStyle = "-fx-background-color: #888888; -fx-text-fill: #CCCCCC;";
-
-        // Initial state
-        crimeButton.setStyle(selectedStyle);
-        propertyButton.setStyle(unselectedStyle);
-        String currentMapType = "Crime"; // Default selection
-        final boolean[] correlationMode = {false}; // Using array as a mutable container
-
-        Label categoryOrGroupLabel = new Label("Filter Group");
-        categoryOrGroupLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
-
-        Label filterLabel = new Label("Filter");
-        filterLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
-
-        Label assessmentClassLabel = new Label("Assessment Class");
-        assessmentClassLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
-
-        // Set up ComboBoxes
-        String[] categoryOrGroup = overlay.getCategoryOrGroup(currentMapType);
-        ComboBox<String> categoryOrGroupComboBox = new ComboBox<>(FXCollections.observableArrayList(categoryOrGroup));
-        categoryOrGroupComboBox.setPrefWidth(200);
-        categoryOrGroupComboBox.getSelectionModel().selectFirst();
-
-        String[] filter = overlay.getFilters(categoryOrGroupComboBox.getValue());
-        ComboBox<String> filterComboBox = new ComboBox<>(FXCollections.observableArrayList(filter));
-        filterComboBox.setPrefWidth(200);
-        filterComboBox.getSelectionModel().selectFirst();
-
-        String[] assessmentClass = overlay.getAssessmentClass(currentMapType);
-        ComboBox<String> assessmentComboBox = new ComboBox<>(FXCollections.observableArrayList(assessmentClass));
-        assessmentComboBox.setPrefWidth(200);
-        assessmentComboBox.getSelectionModel().selectFirst();
-
-        // Default selections to "None" where applicable
-        if (categoryOrGroupComboBox.getItems().contains("None")) {
-            categoryOrGroupComboBox.setValue("None");
-        }
-        if (filterComboBox.getItems().contains("None")) {
-            filterComboBox.setValue("None");
-        }
-        if (assessmentComboBox.getItems().contains("None")) {
-            assessmentComboBox.setValue("None");
-        }
-
-        // Hide assessment class for Crime mode
-        assessmentClassLabel.setVisible(currentMapType.equals("Property"));
-        assessmentComboBox.setVisible(currentMapType.equals("Property"));
-
-        // Create a legend panel
-        VBox legendPanel = createLegend();
+        // Create labels
+        Label categoryOrGroupLabel = leftPanel.getCategoryOrGroupLabel();
+        Label filterLabel = leftPanel.getFilterLabel();
+        Label assessmentClassLabel = leftPanel.getAssessmentClassLabel();
 
         // Create buttons for additional actions
         Button applyFilterButton = new Button("Create Map");
         Button resetButton = new Button("Reset");
 
-        // Create an HBox to hold the buttons side by side
         HBox buttonContainer = new HBox(10);
         buttonContainer.getChildren().addAll(applyFilterButton, resetButton);
+
+        // Create a legend panel
+        Separator legendSeparator = new Separator();
+        legendSeparator.setPadding(new Insets(10, 0, 5, 0));
+
+        // Set up ComboBoxes
+        updateComboBoxes("Crime");
+
+        assessmentClassLabel.setVisible(false);
+        assessmentComboBox.setVisible(false);
 
         // Add the legend to left controls panel
         leftControls.getChildren().addAll(
@@ -239,268 +193,61 @@ public class BatMapApplication {
                 filterComboBox,
                 assessmentClassLabel,
                 assessmentComboBox,
-                buttonContainer
+                buttonContainer,
+                legendSeparator,
+                legendPanel
         );
 
-        // Add legend components
-        Separator legendSeparator = new Separator();
-        legendSeparator.setPadding(new Insets(10, 0, 5, 0));
-        leftControls.getChildren().addAll(legendSeparator, legendPanel);
-
         // Add button event handlers
-        crimeButton.setOnAction(e -> {
-            if (correlationMode[0]) {
-                // Exit correlation mode
-                correlationMode[0] = false;
-                correlationButton.setStyle(correlationStyle);
-            }
-
-            crimeButton.setStyle(selectedStyle);
-            propertyButton.setStyle(unselectedStyle);
+        crimeButton.setOnAction(_ -> {
             String mapType = "Crime";
-
-            // Enable filter controls
-            categoryOrGroupLabel.setDisable(false);
-            categoryOrGroupComboBox.setDisable(false);
-            filterLabel.setDisable(false);
-            filterComboBox.setDisable(false);
-
-            // Update ComboBoxes
-            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
-
-            // Make sure "None" is selected if available
-            if (categoryOrGroupComboBox.getItems().contains("None")) {
-                categoryOrGroupComboBox.setValue("None");
-            } else {
-                categoryOrGroupComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Update filter items based on selected category
-            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
-            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
-
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
-
-            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
-            if (assessmentComboBox.getItems().contains("None")) {
-                assessmentComboBox.setValue("None");
-            } else {
-                assessmentComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Show/hide assessment class based on map type
-            assessmentClassLabel.setVisible(false);
-            assessmentComboBox.setVisible(false);
-
-            // Update legend
-            VBox legendItems = (VBox) legendPanel.getUserData();
-            updateLegendItems(legendItems, "Crime");
+            buttonClick(mapType);
         });
 
-        propertyButton.setOnAction(e -> {
-            if (correlationMode[0]) {
-                // Exit correlation mode
-                correlationMode[0] = false;
-                correlationButton.setStyle(correlationStyle);
-            }
-
-            propertyButton.setStyle(selectedStyle);
-            crimeButton.setStyle(unselectedStyle);
+        propertyButton.setOnAction(_ -> {
             String mapType = "Property";
-
-            // Enable filter controls
-            categoryOrGroupLabel.setDisable(false);
-            categoryOrGroupComboBox.setDisable(false);
-            filterLabel.setDisable(false);
-            filterComboBox.setDisable(false);
-
-            // Update ComboBoxes
-            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup(mapType)));
-
-            // Make sure "None" is selected if available
-            if (categoryOrGroupComboBox.getItems().contains("None")) {
-                categoryOrGroupComboBox.setValue("None");
-            } else {
-                categoryOrGroupComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Update filter items based on selected category
-            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
-            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
-
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
-
-            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass(mapType)));
-            if (assessmentComboBox.getItems().contains("None")) {
-                assessmentComboBox.setValue("None");
-            } else {
-                assessmentComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Show/hide assessment class based on map type
-            assessmentClassLabel.setVisible(true);
-            assessmentComboBox.setVisible(true);
-
-            // Update legend
-            VBox legendItems = (VBox) legendPanel.getUserData();
-            updateLegendItems(legendItems, "Property");
+            buttonClick(mapType);
         });
 
         // Add correlation button event handler
-        correlationButton.setOnAction(e -> {
-            correlationMode[0] = !correlationMode[0];
+        correlationButton.setOnAction(_ -> {
+            removeOverlay();
+            
+            leftPanel.enterCorrelation();
 
-            if (correlationMode[0]) {
-                // Enter correlation mode
-                correlationButton.setStyle(correlationSelectedStyle);
-                crimeButton.setStyle(disabledStyle);
-                propertyButton.setStyle(disabledStyle);
+            // Generate correlation overlay immediately
+            String imagePath = overlay.drawCorrelationImage();
+            displayOverlay(imagePath);
 
-                // Disable filter controls
-                categoryOrGroupLabel.setDisable(true);
-                categoryOrGroupComboBox.setDisable(true);
-                filterLabel.setDisable(true);
-                filterComboBox.setDisable(true);
-                assessmentClassLabel.setDisable(true);
-                assessmentComboBox.setDisable(true);
-
-                // Generate correlation overlay immediately
-                String imagePath = overlay.drawCorrelationImage();
-                displayOverlay(imagePath);
-
-                // Update legend
-                VBox legendItems = (VBox) legendPanel.getUserData();
-                updateLegendItems(legendItems, "Crime-Property Correlation");
-            } else {
-                // Exit correlation mode
-                correlationButton.setStyle(correlationStyle);
-
-                // Restore previous selection
-                if (currentMapType.equals("Crime")) {
-                    crimeButton.setStyle(selectedStyle);
-                    propertyButton.setStyle(unselectedStyle);
-                    assessmentClassLabel.setVisible(false);
-                    assessmentComboBox.setVisible(false);
-                } else {
-                    propertyButton.setStyle(selectedStyle);
-                    crimeButton.setStyle(unselectedStyle);
-                    assessmentClassLabel.setVisible(true);
-                    assessmentComboBox.setVisible(true);
-                }
-
-                // Re-enable filter controls
-                categoryOrGroupLabel.setDisable(false);
-                categoryOrGroupComboBox.setDisable(false);
-                filterLabel.setDisable(false);
-                filterComboBox.setDisable(false);
-                assessmentClassLabel.setDisable(false);
-                assessmentComboBox.setDisable(false);
-
-                // Clear overlay
-                try {
-                    StackPane mapContainer = (StackPane) mapView.getParent();
-                    mapContainer.getChildren().removeIf(node ->
-                            node != mapView && node instanceof ImageView);
-                } catch (Exception ex) {
-                    System.err.println("Error clearing overlay: " + ex.getMessage());
-                }
-                // Restore legend based on previous selection
-                VBox legendItems = (VBox) legendPanel.getUserData();
-                String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
-                updateLegendItems(legendItems, mapType);
-            }
+            updateLegend("Crime-Property Correlation");
         });
-
 
         // Add event handlers for the other controls
         categoryOrGroupComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
-            filterComboBox.setItems(FXCollections.observableArrayList(overlay.getFilters(newValue)));
-
-            // Make sure "None" is selected if available
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
+            String[] updatedFilters = overlay.getFilters(newValue);
+            leftPanel.updateComboBox(filterComboBox, updatedFilters);
         });
 
-        applyFilterButton.setOnAction(e -> {
-            if (correlationMode[0]) {
-                // In correlation mode, just regenerate correlation overlay
-                String imagePath = overlay.drawCorrelationImage();
-                displayOverlay(imagePath);
-            } else {
-                // Determine which map type is selected
-                String mapType = crimeButton.getStyle().equals(selectedStyle) ? "Crime" : "Property";
+        applyFilterButton.setOnAction(_ -> {
+            removeOverlay();
 
-                overlay.setMapType(mapType);
-                overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
-                overlay.setFilter(filterComboBox.getValue());
-                overlay.setAssessment(assessmentComboBox.getValue());
+            // Determine which map type is selected
+            String mapType = crimeButton.getStyle().equals(leftPanel.getSelectedStyle()) ? "Crime" : "Property";
 
-                // Add the heat map image
-                String imagePath = overlay.drawImage();
-                displayOverlay(imagePath);
-            }
+            overlay.setMapType(mapType);
+            overlay.setCategoryOrGroup(categoryOrGroupComboBox.getValue());
+            overlay.setFilter(filterComboBox.getValue());
+            overlay.setAssessment(assessmentComboBox.getValue());
+
+            // Add the heat map image
+            String imagePath = overlay.drawImage();
+            displayOverlay(imagePath);
         });
 
         // Reset Button functionality
-        resetButton.setOnAction(e -> {
-            // Exit correlation mode if active
-            correlationMode[0] = false;
-            correlationButton.setStyle(correlationStyle);
-
-            // Reset button selection (Crime as default)
-            crimeButton.setStyle(selectedStyle);
-            propertyButton.setStyle(unselectedStyle);
-
-            // Enable filter controls
-            categoryOrGroupLabel.setDisable(false);
-            categoryOrGroupComboBox.setDisable(false);
-            filterLabel.setDisable(false);
-            filterComboBox.setDisable(false);
-            assessmentClassLabel.setDisable(false);
-            assessmentComboBox.setDisable(false);
-
-            // Reset all combo box selections to the first item
-            categoryOrGroupComboBox.setItems(FXCollections.observableArrayList(overlay.getCategoryOrGroup("Crime")));
-
-            // Make sure "None" is selected if available
-            if (categoryOrGroupComboBox.getItems().contains("None")) {
-                categoryOrGroupComboBox.setValue("None");
-            } else {
-                categoryOrGroupComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Update filter options based on selected category
-            String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
-            filterComboBox.setItems(FXCollections.observableArrayList(updatedFilters));
-
-            if (filterComboBox.getItems().contains("None")) {
-                filterComboBox.setValue("None");
-            } else {
-                filterComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Reset assessment class dropdown
-            assessmentComboBox.setItems(FXCollections.observableArrayList(overlay.getAssessmentClass("Crime")));
-            if (assessmentComboBox.getItems().contains("None")) {
-                assessmentComboBox.setValue("None");
-            } else {
-                assessmentComboBox.getSelectionModel().selectFirst();
-            }
-
-            // Hide assessment controls for Crime mode
-            assessmentClassLabel.setVisible(false);
-            assessmentComboBox.setVisible(false);
+        resetButton.setOnAction(_ -> {
+            // Default to crime button
+            crimeButton.fire();
 
             // Reset the overlay object's internal state
             overlay.setMapType("");
@@ -509,28 +256,38 @@ public class BatMapApplication {
             overlay.setAssessment("");
 
             // Remove the overlay from the UI
-            try {
-                // Get the map container
-                StackPane mapContainer = (StackPane) mapView.getParent();
-
-                // Remove any overlay views
-                mapContainer.getChildren().removeIf(node ->
-                        node != mapView && node instanceof ImageView);
-
-                System.out.println("Overlay cleared");
-            } catch (Exception ex) {
-                System.err.println("Error clearing overlay: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+            removeOverlay();
 
             System.out.println("Filters reset");
-
-            // Reset legend to crime (default)
-            VBox legendItems = (VBox) legendPanel.getUserData();
-            updateLegendItems(legendItems, "Crime");
         });
 
         return leftControls;
+    }
+
+    private void updateComboBoxes(String mapType) {
+        // Update ComboBoxes
+        String[] updatedCategoryOrGroup = overlay.getCategoryOrGroup(mapType);
+        leftPanel.updateComboBox(categoryOrGroupComboBox, updatedCategoryOrGroup);
+
+        // Update filter items based on selected category
+        String[] updatedFilters = overlay.getFilters(categoryOrGroupComboBox.getValue());
+        leftPanel.updateComboBox(filterComboBox, updatedFilters);
+
+        String[] updatedAssessmentClass = overlay.getAssessmentClass(mapType);
+        leftPanel.updateComboBox(assessmentComboBox, updatedAssessmentClass);
+
+        updateLegend(mapType);
+    }
+
+    private void updateLegend(String mapType) {
+        VBox legendItems = (VBox) legendPanel.getUserData();
+        leftPanel.updateLegendItems(legendItems, mapType);
+    }
+
+    private void buttonClick(String mapType) {
+        leftPanel.exitCorrelation();
+        leftPanel.buttonClick(mapType);
+        updateComboBoxes(mapType);
     }
 
     /**
@@ -614,7 +371,13 @@ public class BatMapApplication {
             return "Neutral correlation - No strong pattern between property values and crime rates";
         }
     }
-
+    
+    private void removeOverlay() {
+        mapViewParent.getChildren().removeIf(node ->
+                node != mapView && node instanceof ImageView && "overlay".equals(node.getId())
+        );
+    }
+    
     /**
      * Displays the overlay image on top of the map
      * @param imagePath Path to the overlay image
@@ -626,13 +389,6 @@ public class BatMapApplication {
                 return;
             }
 
-            // Get the map container
-            StackPane mapContainer = (StackPane) mapView.getParent();
-
-            // Remove previous overlay if it exists
-            mapContainer.getChildren().removeIf(node ->
-                    node != mapView && node instanceof ImageView && "overlay".equals(node.getId()));
-
             // Create a File object from the path
             File imageFile = new File(imagePath);
             if (!imageFile.exists()) {
@@ -640,6 +396,8 @@ public class BatMapApplication {
                 return;
             }
 
+            removeOverlay();
+            
             // Load the image
             String imageUrl = imageFile.toURI().toString();
             Image overlayImage = new Image(imageUrl);
@@ -718,7 +476,7 @@ public class BatMapApplication {
             overlayView.setOnMouseExited(_ -> hoverTooltip.hide());
 
             // Add the overlay on top of the map
-            mapContainer.getChildren().add(overlayView);
+            mapViewParent.getChildren().add(overlayView);
 
             System.out.println("Overlay successfully displayed");
 
@@ -739,104 +497,5 @@ public class BatMapApplication {
         } catch (Exception e) {
             System.err.println("Failed to load CSS: " + e.getMessage());
         }
-    }
-
-    /**
-     * Creates a legend panel that updates based on the current map type
-     * @return VBox containing the legend
-     */
-    private VBox createLegend() {
-        VBox legendPanel = new VBox(8);
-        legendPanel.setPadding(new Insets(10));
-        legendPanel.setStyle("-fx-background-color: #333333; -fx-border-color: #555555; -fx-border-width: 1;");
-
-        Label legendTitle = new Label("Map Legend");
-        legendTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;");
-
-        // Container for legend items that will be updated
-        VBox legendItems = new VBox(5);
-
-        // Initially populate with crime legend (default)
-        updateLegendItems(legendItems, "Crime");
-
-        legendPanel.getChildren().addAll(legendTitle, new Separator(), legendItems);
-
-        // Store reference to legendItems for updates
-        legendPanel.setUserData(legendItems);
-
-        return legendPanel;
-    }
-
-    /**
-     * Updates the legend items based on the map type
-     * @param legendItems VBox containing legend items
-     * @param mapType The current map type (Crime, Property, or Crime-Property Correlation)
-     */
-    private void updateLegendItems(VBox legendItems, String mapType) {
-        legendItems.getChildren().clear();
-
-        if (mapType.equals("Crime")) {
-            // Create legend items for crime map
-            legendItems.getChildren().addAll(
-                    createLegendItem("High Crime", Color.rgb(220, 50, 50), ">50 incidents/year"),
-                    createLegendItem("Medium-High Crime", Color.rgb(220, 150, 50), "35-50 incidents/year"),
-                    createLegendItem("Medium Crime", Color.rgb(150, 220, 50), "20-35 incidents/year"),
-                    createLegendItem("Low Crime", Color.rgb(50, 50, 220), "<20 incidents/year")
-            );
-        }
-        else if (mapType.equals("Property")) {
-            // Create legend items for property map
-            legendItems.getChildren().addAll(
-                    createLegendItem("High Value", Color.rgb(220, 50, 50), ">$1.5M"),
-                    createLegendItem("Medium-High Value", Color.rgb(220, 150, 50), "$1M-$1.5M"),
-                    createLegendItem("Medium Value", Color.rgb(50, 220, 50), "$500K-$1M"),
-                    createLegendItem("Low Value", Color.rgb(50, 50, 220), "<$500K")
-            );
-        }
-        else if (mapType.equals("Crime-Property Correlation")) {
-            // Create legend items for correlation map
-            legendItems.getChildren().addAll(
-                    createLegendItem("Strong Positive", Color.rgb(0, 255, 0), "High property value, low crime"),
-                    createLegendItem("Moderate Positive", Color.rgb(100, 255, 100), "Above avg. property, below avg. crime"),
-                    createLegendItem("Neutral", Color.rgb(50, 50, 220), "No strong correlation"),
-                    createLegendItem("Moderate Negative", Color.rgb(255, 100, 0), "Below avg. property, above avg. crime"),
-                    createLegendItem("Strong Negative", Color.rgb(255, 0, 0), "Low property value, high crime")
-            );
-        }
-    }
-
-    /**
-     * Creates a single legend item with color box and description
-     * @param label Text label for the legend item
-     * @param color Color for the legend item box
-     * @param description Optional description text
-     * @return HBox containing the legend item
-     */
-    private HBox createLegendItem(String label, Color color, String description) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-
-        // Create color box
-        Rectangle colorBox = new Rectangle(15, 15);
-        colorBox.setFill(color);
-        colorBox.setStroke(Color.WHITE);
-        colorBox.setStrokeWidth(0.5);
-
-        // Create VBox for label and description
-        VBox textBox = new VBox(2);
-        Label itemLabel = new Label(label);
-        itemLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12px;");
-
-        textBox.getChildren().add(itemLabel);
-
-        // Add description if provided
-        if (description != null && !description.isEmpty()) {
-            Label descLabel = new Label(description);
-            descLabel.setStyle("-fx-text-fill: #BBBBBB; -fx-font-size: 10px;");
-            textBox.getChildren().add(descLabel);
-        }
-
-        item.getChildren().addAll(colorBox, textBox);
-        return item;
     }
 }
