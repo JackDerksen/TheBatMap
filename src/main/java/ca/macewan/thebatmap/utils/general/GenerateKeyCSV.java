@@ -21,14 +21,12 @@ public class GenerateKeyCSV {
     public static final String KEY_PROPERTY_DATA_PATH = OUTPUT_DIR + "key_property_data.csv";
     public static final String KEY_CRIME_DATA_PATH = OUTPUT_DIR + "key_crime_data.csv";
 
-    public static String getOutputDir() { return OUTPUT_DIR; }
-
     /**
      * Generates a CSV file with key property data (value and location)
-     * @return Path to the generated CSV file
+     *
      * @throws IOException If an I/O error occurs
      */
-    public static Path generateKeyPropertyData() throws IOException {
+    public static void generateKeyPropertyData() throws IOException {
         // Ensure output directory exists
         Files.createDirectories(Paths.get(OUTPUT_DIR));
 
@@ -53,7 +51,7 @@ public class GenerateKeyCSV {
                 double lon = property.getLocation().getLongitude();
 
                 // Skip properties outside map bounds
-                if (!CoordinateToPixel.isInBounds(lat, lon)) {
+                if (CoordinateToPixel.outOfBounds(lat, lon)) {
                     continue;
                 }
 
@@ -78,7 +76,6 @@ public class GenerateKeyCSV {
         }
 
         System.out.println("Generated property data CSV at: " + outputPath.toAbsolutePath());
-        return outputPath;
     }
 
     /**
@@ -120,7 +117,7 @@ public class GenerateKeyCSV {
                 double lon = crime.getLocation().getLongitude();
 
                 // Skip crimes outside map bounds
-                if (!CoordinateToPixel.isInBounds(lat, lon)) {
+                if (CoordinateToPixel.outOfBounds(lat, lon)) {
                     skippedCount++;
                     continue;
                 }

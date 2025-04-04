@@ -44,11 +44,11 @@ public class CrimeCategoryExtractor {
 
                     // Create mappings
                     if (group != null) {
-                        categoryToGroups.computeIfAbsent(category, k -> new TreeSet<>()).add(group);
+                        categoryToGroups.computeIfAbsent(category, _ -> new TreeSet<>()).add(group);
                         groups.add(group);
 
                         if (type != null) {
-                            groupToTypes.computeIfAbsent(group, k -> new TreeSet<>()).add(type);
+                            groupToTypes.computeIfAbsent(group, _ -> new TreeSet<>()).add(type);
                             types.add(type);
                         }
                     }
