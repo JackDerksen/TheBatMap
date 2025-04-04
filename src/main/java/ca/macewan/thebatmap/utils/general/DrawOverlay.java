@@ -250,8 +250,12 @@ public class DrawOverlay {
         String originalFilter = titleCaseToOriginalMap.getOrDefault(filter, filter);
         String originalAssessment = titleCaseToOriginalMap.getOrDefault(assessment, assessment);
 
-        System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter);
-        System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment);
+        if (!originalAssessment.equals("None")) {
+            originalAssessment = originalAssessment.toUpperCase();
+        }
+
+        System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter + " " + titleCaseToOriginalMap.get(filter));
+        System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment + " " + titleCaseToOriginalMap.get(assessment));
 
         // Temporarily store the original assessment
         String tempAssessment = assessment;
