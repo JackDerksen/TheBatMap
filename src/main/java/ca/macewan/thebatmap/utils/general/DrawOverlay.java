@@ -98,21 +98,33 @@ public class DrawOverlay {
      * @return Path to the generated image file, or null if generation failed
      */
     public String drawCorrelationImage() {
+        Map<String, Double> correlationValues = getCorrelationValues();
+
+        if (correlationValues.isEmpty()) {
+            System.out.println("No correlation data available");
+            return null;
+        } else {
+            colorImage(correlationValues, "Correlation", 0);
+
+            // Save the image
+            String fileName = "correlation_" + System.currentTimeMillis() + ".png";
+            return createImageFile(fileName);
+        }
+    }
+
+    private Map<String, Double> getCorrelationValues() {
         Map<String, Double> correlationValues = new HashMap<>();
 
         // Calculate correlation values for each pixel
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                String key = x + "," + y;
-
                 // Get property value and crime count for this pixel
+                String key = x + "," + y;
                 double propertyValue = pixels.getPropertyIntensity(x, y);
                 double crimeIntensity = pixels.getCrimeIntensity(x, y);
 
                 // Skip pixels with no data
-                if (propertyValue == 0.0 && crimeIntensity == 0.0) {
-                    continue;
-                }
+                if (propertyValue == 0.0 && crimeIntensity == 0.0) { continue; }
 
                 // Calculate correlation:
                 // 1 = high property, low crime (blue)
@@ -121,89 +133,10 @@ public class DrawOverlay {
                 double correlation = propertyValue - crimeIntensity;
 
                 // Only store pixels with significant data
-                if (Math.abs(correlation) > 0.05) {
-                    correlationValues.put(key, correlation);
-                }
+                if (Math.abs(correlation) > 0.05) { correlationValues.put(key, correlation); }
             }
         }
-
-        if (!correlationValues.isEmpty()) {
-            // Create a fresh image
-            Graphics2D g2d = img.createGraphics();
-
-            // Clear the image completely
-            g2d.setComposite(AlphaComposite.Clear);
-            g2d.fillRect(0, 0, width, height);
-            g2d.setComposite(AlphaComposite.SrcOver);
-
-            // Draw each data point with color based on correlation value
-            for (Map.Entry<String, Double> entry : correlationValues.entrySet()) {
-                Color color = getCorrelationColor(entry.getValue());
-                g2d.setColor(color);
-
-                String[] coordinate = entry.getKey().split(",");
-                int x = Integer.parseInt(coordinate[0]);
-                int y = Integer.parseInt(coordinate[1]);
-                g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
-            }
-
-            g2d.dispose();
-
-            // Save the image
-            String fileName = "correlation_" + System.currentTimeMillis() + ".png";
-            String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
-
-            // Ensure directory exists
-            File directory = new File(outputDir);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-
-            File outputFile = new File(outputDir + fileName);
-
-            try {
-                // Write using PNG format which supports transparency
-                ImageIO.write(img, "png", outputFile);
-                System.out.println("Correlation image created at " + outputFile.getAbsolutePath());
-                return outputFile.getAbsolutePath();
-            } catch (IOException e) {
-                System.err.println("Error creating correlation image: " + e.getMessage());
-                e.printStackTrace();
-                return null;
-            }
-        } else {
-            System.out.println("No correlation data available");
-            return null;
-        }
-    }
-
-    /**
-     * Gets a color representing the correlation value
-     * @param value Correlation value from -1 to 1
-     * @return Color representing the correlation
-     */
-    private Color getCorrelationColor(double value) {
-        int r, g, b;
-
-        // Positive correlation (high property value, low crime) = blue
-        // Negative correlation (low property value, high crime) = red
-        // Values near zero = green
-        if (value > 0) {
-            // Positive correlation (0 to 1): Green to Blue
-            double ratio = Math.min(1.0, value);
-            r = 0;
-            g = (int)(255 * ratio);
-            b = (int)(255 * (1 - ratio));
-        } else {
-            // Negative correlation (-1 to 0): Red to Green
-            double ratio = Math.min(1.0, -value);
-            r = (int)(255 * ratio);
-            g = (int)(255 * (1 - ratio));
-            b = 0;
-        }
-
-        // Add some alpha transparency (80% opaque)
-        return new Color(r, g, b, 204);
+        return correlationValues;
     }
 
     /**
@@ -220,24 +153,7 @@ public class DrawOverlay {
         System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter);
         System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment);
 
-        // Temporarily store the original assessment
-        String tempAssessment = assessment;
-
-        // Replace the assessment with original version for filtering
-        assessment = originalAssessment;
-
         Map<String, Double> pixelValues = getPixelValues(originalFilter);
-
-        // Restore the display version
-        assessment = tempAssessment;
-
-        // Handle both cases: data exists or no data
-        Graphics2D g2d = img.createGraphics();
-
-        // Clear the image completely
-        g2d.setComposite(AlphaComposite.Clear);
-        g2d.fillRect(0, 0, width, height);
-        g2d.setComposite(AlphaComposite.SrcOver);
 
         String safeFilter = filter.replace('/', '_').replace('\\', '_')
                 .replace(':', '_').replace('*', '_')
@@ -245,47 +161,17 @@ public class DrawOverlay {
                 .replace('<', '_').replace('>', '_')
                 .replace('|', '_');
 
-        String fileName = mapType + "_" + categoryOrGroup + "_" + safeFilter + "_" + assessment + ".png";
-        String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
-
-        // Ensure directory exists
-        File directory = new File(outputDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-
-        if (!pixelValues.isEmpty()) {
-            // Draw data points when we have matching data
-            Map<String, Color> gradientMap = gradientMap(pixelValues);
-
-            for (Map.Entry<String, Color> current : gradientMap.entrySet()) {
-                g2d.setColor(current.getValue());
-                String[] coordinate = current.getKey().split(",");
-                int x = Integer.parseInt(coordinate[0]);
-                int y = Integer.parseInt(coordinate[1]);
-                g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
-            }
-        } else {
+        if (pixelValues.isEmpty()) {
             // Create a simple message for "no data" case
             System.out.println("No data matches filter: " + mapType + "_" + categoryOrGroup + "_" + filter + "_" + assessment);
-
-            // We'll keep the image completely transparent and just create a blank overlay
-            fileName = "no_data_" + System.currentTimeMillis() + ".png";
-        }
-
-        g2d.dispose();
-
-        File outputFile = new File(outputDir + fileName);
-
-        try {
-            // Write using PNG format which supports transparency
-            ImageIO.write(img, "png", outputFile);
-            System.out.println("Image created at " + outputFile.getAbsolutePath());
-            return outputFile.getAbsolutePath();
-        } catch (IOException e) {
-            System.err.println("Error creating image: " + e.getMessage());
-            e.printStackTrace();
             return null;
+        } else {
+            List<Double> bounds = detectOutlier(pixelValues);
+            colorImage(pixelValues, "notCorrelation", bounds.get(1));
+
+            // Save the image
+            String fileName = mapType + "_" + categoryOrGroup + "_" + safeFilter + "_" + assessment + ".png";
+            return createImageFile(fileName);
         }
     }
 
@@ -364,25 +250,38 @@ public class DrawOverlay {
     /**
      * Convert normalized value into RGB values. Blue (min) -> Green -> Red (max).
      * @param value - Normalized value between 0 - 1
-     * @return - Color(r,g,b)
+     * @return - Color(r,g,b,a)
      */
-    private static Color getGradientColor(double value) {
-        int r, g, b;
+    private static Color getColor(double value, double upperBound, String mapType) {
+        int r, g, b, a;
+        boolean isCorrelation = mapType.equals("Correlation");
+        boolean valueThreshold;
+        double posRatio;
+        double negRatio;
 
-        if (value < 0.5) {
-            // Blue (0, 0, 255) to Yellow (255, 255, 0)
-            double ratio = value / 0.5;
-            r = (int) (255 * ratio);
-            g = (int) (255 * ratio);
-            b = (int) (255 * (1 - ratio));
+        if (isCorrelation) {
+            valueThreshold = value > 0;
+            posRatio = Math.min(1.0, value);
+            negRatio = Math.min(1.0, -value);
+            a = 204;
         } else {
-            // Yellow (255, 255, 0) to Red (255, 0, 0)
-            double ratio = (value - 0.5) / 0.5;
-            r = 255;
-            g = (int) (255 * (1 - ratio));
+            value = Math.min(1.0, value / upperBound);
+            valueThreshold = value < 0.5;
+            posRatio = value / 0.5;
+            negRatio = (value - 0.5) / 0.5;
+            a = 255;
+        }
+
+        if (valueThreshold) {
+            r = isCorrelation ? 0 : (int) (255 * posRatio);
+            g = (int) (255 * posRatio);
+            b = (int) (255 * (1 - posRatio));
+        } else {
+            r = isCorrelation ? (int) (255 * negRatio) : 255;
+            g = (int) (255 * (1 - negRatio));
             b = 0;
         }
-        return new Color(r, g, b);
+        return new Color(r, g, b, a);
     }
 
     private static List<Double> detectOutlier(Map<String, Double> pixelValues) {
@@ -411,6 +310,52 @@ public class DrawOverlay {
     private static double getPercentile(List<Double> sortedData, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * sortedData.size()) - 1;
         return sortedData.get(index);
+    }
+
+    private void colorImage(Map<String, Double> stringDoubleMap, String mapType, double bound) {
+        // Create a fresh image
+        Graphics2D g2d = img.createGraphics();
+
+        // Clear the image completely
+        g2d.setComposite(AlphaComposite.Clear);
+        g2d.fillRect(0, 0, width, height);
+        g2d.setComposite(AlphaComposite.SrcOver);
+
+        // Draw each data point with color based on correlation value
+        for (Map.Entry<String, Double> entry : stringDoubleMap.entrySet()) {
+            double entryValue = entry.getValue();
+            Color color = getColor(entryValue, bound, mapType);
+            g2d.setColor(color);
+
+            String[] coordinate = entry.getKey().split(",");
+            int x = Integer.parseInt(coordinate[0]);
+            int y = Integer.parseInt(coordinate[1]);
+            g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
+        }
+        g2d.dispose();
+    }
+
+    private String createImageFile(String fileName) {
+        String outputDir = "src/main/resources/ca/macewan/thebatmap/assets/";
+
+        // Ensure directory exists
+        File directory = new File(outputDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File outputFile = new File(outputDir + fileName);
+
+        try {
+            // Write using PNG format which supports transparency
+            ImageIO.write(img, "png", outputFile);
+            System.out.println("Image created at " + outputFile.getAbsolutePath());
+            return outputFile.getAbsolutePath();
+        } catch (IOException e) {
+            System.err.println("Error creating image: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private String toTitleCase(String input) {
