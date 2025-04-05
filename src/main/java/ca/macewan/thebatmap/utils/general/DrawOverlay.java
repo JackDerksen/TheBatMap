@@ -54,7 +54,7 @@ public class DrawOverlay {
             case "Type" -> filterSet = pixels.getCrimeTypes();
             case "Ward" -> filterSet = pixels.getWards();
             case "Neighbourhood" -> filterSet = pixels.getNeighborhoods();
-            case null, default -> filterSet.add("None");
+            case null, default -> {}
         }
 
         // Create the final list with "None" at top
