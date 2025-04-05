@@ -18,8 +18,8 @@ public class CalculatePixelValue {
     private static final int MAP_HEIGHT = 1850;
 
     // Data storage
-    private Map<String, CrimePixelData> crimePixels = new HashMap<>();
-    private Map<String, PropertyPixelData> propertyPixels = new HashMap<>();
+    private final Map<String, CrimePixelData> crimePixels = new HashMap<>();
+    private final Map<String, PropertyPixelData> propertyPixels = new HashMap<>();
 
     public Map<String, CrimePixelData> getCrimePixels() {
         return crimePixels;
@@ -34,9 +34,9 @@ public class CalculatePixelValue {
      */
     public static class CrimePixelData {
         private int count = 0;
-        private Map<String, Integer> categoryCount = new HashMap<>();
-        private Map<String, Integer> groupCount = new HashMap<>();
-        private Map<String, Integer> groupTypeCount = new HashMap<>();
+        private final Map<String, Integer> categoryCount = new HashMap<>();
+        private final Map<String, Integer> groupCount = new HashMap<>();
+        private final Map<String, Integer> groupTypeCount = new HashMap<>();
 
         public void addCrime(CrimeData crime) {
             count++;
@@ -95,9 +95,9 @@ public class CalculatePixelValue {
     public static class PropertyPixelData {
         private int count = 0;
         private double totalValue = 0;
-        private Map<String, Integer> wardCount = new HashMap<>();
-        private Map<String, Integer> neighborhoodCount = new HashMap<>();
-        private Map<String, Integer> assessmentClassCount = new HashMap<>();
+        private final Map<String, Integer> wardCount = new HashMap<>();
+        private final Map<String, Integer> neighborhoodCount = new HashMap<>();
+        private final Map<String, Integer> assessmentClassCount = new HashMap<>();
 
         public void addProperty(PropertyData property) {
             count++;
@@ -175,7 +175,7 @@ public class CalculatePixelValue {
             double lon = property.getLocation().getLongitude();
 
             // Skip properties outside map bounds
-            if (!CoordinateToPixel.isInBounds(lat, lon)) {
+            if (CoordinateToPixel.outOfBounds(lat, lon)) {
                 continue;
             }
 
@@ -210,7 +210,7 @@ public class CalculatePixelValue {
             double lon = crime.getLocation().getLongitude();
 
             // Skip crimes outside map bounds
-            if (!CoordinateToPixel.isInBounds(lat, lon)) {
+            if (CoordinateToPixel.outOfBounds(lat, lon)) {
                 continue;
             }
 
@@ -399,16 +399,15 @@ public class CalculatePixelValue {
      * @return Heat value appropriate for the selected mode
      */
     public double getHeatValue(int x, int y, int mode) {
-        switch (mode) {
-            case 0: // Crime mode
-                return getCrimeIntensity(x, y);
-            case 1: // Property mode
-                return getPropertyIntensity(x, y);
-            case 2: // Correlation mode
-                return getCorrelationValue(x, y);
-            default:
-                return 0.0;
-        }
+        return switch (mode) {
+            case 0 -> // Crime mode
+                    getCrimeIntensity(x, y);
+            case 1 -> // Property mode
+                    getPropertyIntensity(x, y);
+            case 2 -> // Correlation mode
+                    getCorrelationValue(x, y);
+            default -> 0.0;
+        };
     }
 
     /**

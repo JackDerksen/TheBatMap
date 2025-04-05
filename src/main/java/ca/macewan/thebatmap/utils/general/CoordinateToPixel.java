@@ -79,10 +79,10 @@ public class CoordinateToPixel {
      * @param longitude The longitude to check
      * @return true if coordinates are within map bounds, false otherwise
      */
-    public static boolean isInBounds(double latitude, double longitude) {
-        return latitude <= TOP_LEFT_LAT &&
-                latitude >= BOTTOM_RIGHT_LAT &&
-                longitude >= TOP_LEFT_LON &&
-                longitude <= BOTTOM_RIGHT_LON;
+    public static boolean outOfBounds(double latitude, double longitude) {
+        return !(latitude <= TOP_LEFT_LAT) ||
+                !(latitude >= BOTTOM_RIGHT_LAT) ||
+                !(longitude >= TOP_LEFT_LON) ||
+                !(longitude <= BOTTOM_RIGHT_LON);
     }
 }

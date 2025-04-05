@@ -16,32 +16,6 @@ import java.util.Map;
 public class ParseCSV {
 
     /**
-     * Reads CSV data into a 2D array of strings
-     *
-     * @param filePath Path to the CSV file
-     * @param skipHeader Whether to skip the header row
-     * @return 2D array of CSV data
-     * @throws IOException If an I/O error occurs
-     */
-    public static String[][] readAsArray(Path filePath, boolean skipHeader) throws IOException {
-        List<String[]> dataList = new ArrayList<>();
-
-        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
-            // Skip header line if requested
-            if (skipHeader) {
-                reader.readLine();
-            }
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                dataList.add(parseCSVLine(line));
-            }
-        }
-
-        return dataList.toArray(new String[0][]);
-    }
-
-    /**
      * Reads CSV data into a list of maps where keys are column names
      *
      * @param filePath Path to the CSV file
