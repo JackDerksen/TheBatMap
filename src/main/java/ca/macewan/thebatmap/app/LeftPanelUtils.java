@@ -9,6 +9,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+/**
+ * Helpers for the left panel in the main app UI
+ */
 public class LeftPanelUtils {
     private final VBox leftControls = new VBox(10);
 

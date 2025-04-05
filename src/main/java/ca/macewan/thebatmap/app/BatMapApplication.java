@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * Main class for the application UI and implementing logic for that UI
+ */
 public class BatMapApplication {
     // Constants
     private static final int WIN_WIDTH = 1000;
