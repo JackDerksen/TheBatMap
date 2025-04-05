@@ -244,49 +244,11 @@ public class DrawOverlay {
         return pixelValues;
     }
 
-    /**
-     * Convert normalized value into RGB values. Blue (min) -> Green -> Red (max).
-     * @param value - Normalized value between 0 - 1
-     * @return - Color(r,g,b,a)
-     */
-    private static Color getColor(double value, double upperBound, String mapType) {
-        int r, g, b, a;
-        boolean isCorrelation = mapType.equals("Correlation");
-        boolean valueThreshold;
-        double posRatio;
-        double negRatio;
-
-        if (isCorrelation) {
-            valueThreshold = value > 0;
-            posRatio = Math.min(1.0, value);
-            negRatio = Math.min(1.0, -value);
-            a = 204;
-        } else {
-            value = Math.min(1.0, value / upperBound);
-            valueThreshold = value < 0.5;
-            posRatio = value / 0.5;
-            negRatio = (value - 0.5) / 0.5;
-            a = 255;
-        }
-
-        if (valueThreshold) {
-            r = isCorrelation ? 0 : (int) (255 * posRatio);
-            g = (int) (255 * posRatio);
-            b = (int) (255 * (1 - posRatio));
-        } else {
-            r = isCorrelation ? (int) (255 * negRatio) : 255;
-            g = (int) (255 * (1 - negRatio));
-            b = 0;
-        }
-        return new Color(r, g, b, a);
-    }
-
     private static List<Double> detectOutlier(Map<String, Double> pixelValues) {
         // Sort data
         List<Double> sortedData = pixelValues.values().stream().sorted().collect(Collectors.toList());
 
         // Compute Q1 and Q3
-        //TODO Change thresholds
         double q1 = getPercentile(sortedData, 5); //25
         double q3 = getPercentile(sortedData, 95); //75
         double iqr = q3 - q1;
@@ -330,6 +292,43 @@ public class DrawOverlay {
             g2d.fillRect(x, y, 5, 5); // Draw each data point as a 5x5 pixel rectangle
         }
         g2d.dispose();
+    }
+
+    /**
+     * Convert normalized value into RGB values. Blue (min) -> Green -> Red (max).
+     * @param value - Normalized value between 0 - 1
+     * @return - Color(r,g,b,a)
+     */
+    private static Color getColor(double value, double upperBound, String mapType) {
+        int r, g, b, a;
+        boolean isCorrelation = mapType.equals("Correlation");
+        boolean valueThreshold;
+        double posRatio;
+        double negRatio;
+
+        if (isCorrelation) {
+            valueThreshold = value > 0;
+            posRatio = Math.min(1.0, value);
+            negRatio = Math.min(1.0, -value);
+            a = 204;
+        } else {
+            value = Math.min(1.0, value / upperBound);
+            valueThreshold = value < 0.5;
+            posRatio = value / 0.5;
+            negRatio = (value - 0.5) / 0.5;
+            a = 255;
+        }
+
+        if (valueThreshold) {
+            r = isCorrelation ? 0 : (int) (255 * posRatio);
+            g = (int) (255 * posRatio);
+            b = (int) (255 * (1 - posRatio));
+        } else {
+            r = isCorrelation ? (int) (255 * negRatio) : 255;
+            g = (int) (255 * (1 - negRatio));
+            b = 0;
+        }
+        return new Color(r, g, b, a);
     }
 
     private String createImageFile(String fileName) {
