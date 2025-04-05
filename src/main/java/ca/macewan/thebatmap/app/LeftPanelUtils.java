@@ -127,7 +127,6 @@ public class LeftPanelUtils {
     public ComboBox<String> createComboBox() {
         ComboBox<String> returnComboBox = new ComboBox<>();
         returnComboBox.setPrefWidth(200);
-        returnComboBox.getSelectionModel().selectFirst();
         return returnComboBox;
     }
 
