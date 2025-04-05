@@ -231,23 +231,6 @@ public class DrawOverlay {
     }
 
     /**
-     * Normalizes neighbourhoods' mean values into RGB values from Blue (min) -> Green -> Red (max).
-     *
-     * @return Map of Coordinate as Key, Color as Value
-     */
-    public static Map<String, Color> gradientMap(Map<String, Double> pixelValues) {
-        Map<String, Color> colorMap = new HashMap<>();
-        double normalized;
-        List<Double> bounds = detectOutlier(pixelValues);
-
-        for (Map.Entry<String, Double> current : pixelValues.entrySet()) {
-            normalized = Math.min(1.0, current.getValue() / bounds.get(1));
-            colorMap.put(current.getKey(), getGradientColor(normalized));
-        }
-        return colorMap;
-    }
-
-    /**
      * Convert normalized value into RGB values. Blue (min) -> Green -> Red (max).
      * @param value - Normalized value between 0 - 1
      * @return - Color(r,g,b,a)
