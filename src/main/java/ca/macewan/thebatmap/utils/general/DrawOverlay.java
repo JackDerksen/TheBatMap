@@ -172,57 +172,75 @@ public class DrawOverlay {
     }
 
     private Map<String, Double> getPixelValues(String filterValue) {
-        Map<String, Double> pixelValues = new HashMap<>();
-        double count;
+        Map<String, Double> pixelValues;
 
         if (mapType.equals("Crime")) {
-            for (Map.Entry<String, CalculatePixelValue.CrimePixelData> entry : pixels.getCrimePixels().entrySet()) {
-                CalculatePixelValue.CrimePixelData crimeData = entry.getValue();
-
-                count = switch (categoryOrGroup) {
-                    case "Category" -> crimeData.getCategoryCount(filterValue);
-                    case "Group" -> crimeData.getGroupCount(filterValue);
-                    case "Type" -> crimeData.getGroupTypeCount(filterValue);
-                    default -> crimeData.getCount();
-                };
-                if (count > 0) pixelValues.put(entry.getKey(), count);
-            }
+            pixelValues = getPixelCrimeCount(filterValue);
         }
         else { // mapType.equals("Property")
-            for (Map.Entry<String, CalculatePixelValue.PropertyPixelData> entry : pixels.getPropertyPixels().entrySet()) {
-                CalculatePixelValue.PropertyPixelData propertyValues = entry.getValue();
-                Map<String, Integer> propertyMap = null;
-                Map<String, Integer> assessmentMap = null;
-
-                // If category/group is "None", we don't filter by it
-                if (!categoryOrGroup.equals("None")) {
-                    if (categoryOrGroup.equals("Ward")) { propertyMap = propertyValues.getWardCount(); }
-                    else if (categoryOrGroup.equals("Neighbourhood")) { propertyMap = propertyValues.getNeighborhoodCount(); }
-                }
-
-                if (!assessment.equals("None")) { assessmentMap = propertyValues.getAssessmentClassCount(); }
-
-                // When category/group is "None", we don't check propertyMap
-                // When filter is "None", we don't check for a specific key
-                boolean includeProperty = true;
-
-                if (propertyMap != null && !filterValue.equals("None")) {
-                    includeProperty = propertyMap.containsKey(filterValue);
-                }
-
-                if (assessmentMap != null && !assessment.equals("None")) {
-                    includeProperty = includeProperty && assessmentMap.containsKey(assessment.toUpperCase());
-                }
-
-                if (includeProperty) {
-                    count = propertyValues.getAverageValue();
-                    pixelValues.put(entry.getKey(), count);
-                }
-            }
+            pixelValues = getPixelPropertyCount(filterValue);
         }
+
         System.out.println("Found " + pixelValues.size() + " matching properties for filter: " +
                 mapType + "/" + categoryOrGroup + "/" + filterValue + "/" + assessment);
 
+        return pixelValues;
+    }
+
+    private Map<String, Double> getPixelCrimeCount(String filterValue) {
+        Map<String, Double> pixelValues = new HashMap<>();
+        double count;
+
+        for (Map.Entry<String, CalculatePixelValue.CrimePixelData> entry : pixels.getCrimePixels().entrySet()) {
+            CalculatePixelValue.CrimePixelData crimeData = entry.getValue();
+
+            count = switch (categoryOrGroup) {
+                case "Category" -> crimeData.getCategoryCount(filterValue);
+                case "Group" -> crimeData.getGroupCount(filterValue);
+                case "Type" -> crimeData.getGroupTypeCount(filterValue);
+                default -> crimeData.getCount();
+            };
+            if (count > 0) pixelValues.put(entry.getKey(), count);
+        }
+
+        return pixelValues;
+    }
+
+    private Map<String, Double> getPixelPropertyCount(String filterValue) {
+        Map<String, Double> pixelValues = new HashMap<>();
+        double count;
+
+        for (Map.Entry<String, CalculatePixelValue.PropertyPixelData> entry : pixels.getPropertyPixels().entrySet()) {
+            CalculatePixelValue.PropertyPixelData propertyValues = entry.getValue();
+
+            Map<String, Integer> propertyMap = null;
+            Map<String, Integer> assessmentMap = null;
+
+            // If category/group is "None", we don't filter by it
+            if (!categoryOrGroup.equals("None")) {
+                if (categoryOrGroup.equals("Ward")) { propertyMap = propertyValues.getWardCount(); }
+                else if (categoryOrGroup.equals("Neighbourhood")) { propertyMap = propertyValues.getNeighborhoodCount(); }
+            }
+
+            if (!assessment.equals("None")) { assessmentMap = propertyValues.getAssessmentClassCount(); }
+
+            // When category/group is "None", we don't check propertyMap
+            // When filter is "None", we don't check for a specific key
+            boolean includeProperty = true;
+
+            if (propertyMap != null && !filterValue.equals("None")) {
+                includeProperty = propertyMap.containsKey(filterValue);
+            }
+
+            if (assessmentMap != null && !assessment.equals("None")) {
+                includeProperty = includeProperty && assessmentMap.containsKey(assessment.toUpperCase());
+            }
+
+            if (includeProperty) {
+                count = propertyValues.getAverageValue();
+                pixelValues.put(entry.getKey(), count);
+            }
+        }
         return pixelValues;
     }
 
