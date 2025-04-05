@@ -38,8 +38,8 @@ public class LeftPanelUtils {
         setLeftControls();
         setPanelTitle();
         setLabelStyles();
-        setCrimeButton();
-        setPropertyButton();
+        setButton(crimeButton);
+        setButton(propertyButton);
         setCorrelationButton();
     }
 
@@ -112,14 +112,9 @@ public class LeftPanelUtils {
         assessmentClassLabel.setStyle(labelStyle);
     }
 
-    private void setCrimeButton() {
-        crimeButton.setPrefWidth(100);
-        crimeButton.setStyle(selectedStyle);
-    }
-
-    private void setPropertyButton() {
-        propertyButton.setPrefWidth(100);
-        propertyButton.setStyle(unselectedStyle);
+    private void setButton(Button button) {
+        button.setPrefWidth(100);
+        button.setStyle(button.getText().equals("Crime") ? selectedStyle : unselectedStyle);
     }
 
     private void setCorrelationButton() {
