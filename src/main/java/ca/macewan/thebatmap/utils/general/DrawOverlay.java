@@ -155,11 +155,7 @@ public class DrawOverlay {
 
         Map<String, Double> pixelValues = getPixelValues(originalFilter);
 
-        String safeFilter = filter.replace('/', '_').replace('\\', '_')
-                .replace(':', '_').replace('*', '_')
-                .replace('?', '_').replace('"', '_')
-                .replace('<', '_').replace('>', '_')
-                .replace('|', '_');
+        String safeFilter = replaceSymbols(filter);
 
         if (pixelValues.isEmpty()) {
             // Create a simple message for "no data" case
@@ -362,5 +358,11 @@ public class DrawOverlay {
         }
 
         return titleCase.toString();
+    }
+
+    private String replaceSymbols(String string) {
+        return string.replace('/', '_').replace('\\', '_').replace(':', '_')
+                .replace('*', '_').replace('?', '_').replace('"', '_')
+                .replace('<', '_').replace('>', '_').replace('|', '_');
     }
 }
