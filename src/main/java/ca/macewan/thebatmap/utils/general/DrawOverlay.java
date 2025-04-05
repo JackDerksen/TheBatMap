@@ -36,15 +36,12 @@ public class DrawOverlay {
     public void setAssessment(String assessment) { this.assessment = assessment; }
 
     public String[] getCategoryOrGroup(String newValue) {
-        if (newValue.equals("Crime")) {
-            return crimeCategoryArray;
-        } else {
-            return propertyCategoryArray;
-        }
+        if (newValue.equals("Crime")) { return crimeCategoryArray; }
+        else { return propertyCategoryArray; }
     }
 
     public String[] getFilters(String newValue) {
-        Set<String> filterSet = new LinkedHashSet<>();
+        Set<String> filterSet = new HashSet<>();
         titleCaseToOriginalMap.clear(); // Clear previous mappings
 
         // Populate the filter set based on the selected category/group
@@ -250,9 +247,7 @@ public class DrawOverlay {
         String originalFilter = titleCaseToOriginalMap.getOrDefault(filter, filter);
         String originalAssessment = titleCaseToOriginalMap.getOrDefault(assessment, assessment);
 
-        if (!originalAssessment.equals("None")) {
-            originalAssessment = originalAssessment.toUpperCase();
-        }
+        if (!originalAssessment.equals("None")) { originalAssessment = originalAssessment.toUpperCase(); }
 
         System.out.println("DEBUG: Using filter: " + filter + " -> " + originalFilter);
         System.out.println("DEBUG: Using assessment: " + assessment + " -> " + originalAssessment);
@@ -346,23 +341,16 @@ public class DrawOverlay {
         else { // mapType.equals("Property")
             for (Map.Entry<String, CalculatePixelValue.PropertyPixelData> entry : pixels.getPropertyPixels().entrySet()) {
                 CalculatePixelValue.PropertyPixelData propertyValues = entry.getValue();
-
                 Map<String, Integer> propertyMap = null;
                 Map<String, Integer> assessmentMap = null;
 
                 // If category/group is "None", we don't filter by it
                 if (!categoryOrGroup.equals("None")) {
-                    if (categoryOrGroup.equals("Ward")) {
-                        propertyMap = propertyValues.getWardCount();
-                    }
-                    else if (categoryOrGroup.equals("Neighbourhood")) {
-                        propertyMap = propertyValues.getNeighborhoodCount();
-                    }
+                    if (categoryOrGroup.equals("Ward")) { propertyMap = propertyValues.getWardCount(); }
+                    else if (categoryOrGroup.equals("Neighbourhood")) { propertyMap = propertyValues.getNeighborhoodCount(); }
                 }
 
-                if (!assessment.equals("None")) {
-                    assessmentMap = propertyValues.getAssessmentClassCount();
-                }
+                if (!assessment.equals("None")) { assessmentMap = propertyValues.getAssessmentClassCount(); }
 
                 // When category/group is "None", we don't check propertyMap
                 // When filter is "None", we don't check for a specific key
@@ -373,7 +361,7 @@ public class DrawOverlay {
                 }
 
                 if (assessmentMap != null && !assessment.equals("None")) {
-                    includeProperty = includeProperty && assessmentMap.containsKey(assessment);
+                    includeProperty = includeProperty && assessmentMap.containsKey(assessment.toUpperCase());
                 }
 
                 if (includeProperty) {
@@ -382,7 +370,6 @@ public class DrawOverlay {
                 }
             }
         }
-
         System.out.println("Found " + pixelValues.size() + " matching properties for filter: " +
                 mapType + "/" + categoryOrGroup + "/" + filterValue + "/" + assessment);
 
