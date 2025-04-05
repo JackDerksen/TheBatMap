@@ -53,18 +53,27 @@ public class DrawOverlay {
             case "Neighbourhood" -> filterSet = pixels.getNeighborhoods();
             case null, default -> {}
         }
+        return setToArray(filterSet);
+    }
 
+    public String[] getAssessmentClass(String newValue) {
+        if (newValue.equals("Property")) {
+            Set<String> assessmentClasses = pixels.getAssessmentClasses();
+            return setToArray(assessmentClasses);
+        }
+        return new String[]{"None"};
+    }
+
+    private String[] setToArray(Set<String> set) {
         // Create the final list with "None" at top
         List<String> result = new ArrayList<>();
-
-        // Always add "None" at the top
-        result.add("None"); // Always include None at the top
+        result.add("None");
 
         // Check for "Other" to add at the end
-        boolean hasOther = filterSet.remove("Other");
+        boolean hasOther = set.remove("Other");
 
         // Add remaining items in alphabetical order
-        List<String> sortedItems = new ArrayList<>(filterSet);
+        List<String> sortedItems = new ArrayList<>(set);
         Collections.sort(sortedItems);
 
         // Apply title case to each item and map to original
@@ -78,50 +87,9 @@ public class DrawOverlay {
                 titleCaseToOriginalMap.put(titleCased, item);
             }
         }
-
-        // Add "Other" at the end if it existed
-        if (hasOther) {
-            result.add("Other");
-        }
+        if (hasOther) { result.add("Other"); }
 
         return result.toArray(new String[0]);
-    }
-
-    public String[] getAssessmentClass(String newValue) {
-        if (newValue.equals("Property")) {
-            Set<String> assessmentClasses = pixels.getAssessmentClasses();
-
-            // Special handling for Other
-            boolean hasOther = assessmentClasses.remove("Other");
-
-            // Convert to list for sorting
-            List<String> sortedList = new ArrayList<>(assessmentClasses);
-            Collections.sort(sortedList);
-
-            // Create final list with special values in special positions
-            List<String> finalList = new ArrayList<>();
-            finalList.add("None"); // Always have None at the top
-
-            // Apply title case to each entry and map to original
-            for (String item : sortedList) {
-                // Keep "None" and "Other" as is
-                if (item.equals("None") || item.equals("Other")) {
-                    finalList.add(item);
-                } else {
-                    String titleCased = toTitleCase(item);
-                    finalList.add(titleCased);
-                    // Store mapping from title case to original
-                    titleCaseToOriginalMap.put(titleCased, item);
-                }
-            }
-
-            if (hasOther) {
-                finalList.add("Other");
-            }
-
-            return finalList.toArray(new String[0]);
-        }
-        return new String[]{"None"};
     }
 
     /**
